@@ -1,0 +1,10 @@
+The Dynamixel Servo includes a python version code to control the MX-12W dynamixel servo with USB2dynamixel.
+1. Prerequisite:
+	Install USB2dynamixel driver on your laptop following the instruction: http://support.robotis.com/en/product/auxdevice/interface/usb2dxl_manual.htm
+	Install python 2.7 and pyserial
+	Install dxl python library package from:https://github.com/HumaRobotics/dynamixel_hr
+	Install python library package numpy 
+2. Application
+	The software code controls the servo motor with 2 different mode.
+	Under mode 1, you can move the servo to different angles as you expect
+	Under mdoe 2, you can let the 2 connected servo make a square move by giving it a start point. 
