@@ -1,0 +1,22 @@
+# FlyCapture2Test makefile
+# To compile the debug verison need to overwrite CXXFLAGS variable to include -ggdb
+
+CC = g++
+OUTPUTNAME = firefly${D}
+INCLUDE =-I/usr/include/flycapture -I/usr/include/opencv2
+CFLAGS = `pkg-config --cflags opencv`
+LIBS = `pkg-config --libs opencv` -lflycapture${D} 
+
+OBJS = firefly.o
+
+${OUTPUTNAME}: ${OBJS}
+	${CC} -o ${OUTPUTNAME} ${OBJS} ${LIBS} ${COMMON_LIBS} 
+
+%.o: %.cpp
+	${CC} ${CFLAGS} ${INCLUDE} $(LIBS)-c $*.cpp
+	 
+clean_obj: 
+	rm -f ${OBJS}	@echo "all cleaned up!"
+
+clean:
+	rm -f ${OUTDIR}/${OUTPUTNAME} ${OBJS}	@echo "all cleaned up!"
