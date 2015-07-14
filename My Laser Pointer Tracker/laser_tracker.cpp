@@ -1,12 +1,16 @@
 #include <flycapture/FlyCapture2.h>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
+#include <opencv/cv.h>
 #include <iostream>
 #include <stdio.h>
+
 using namespace FlyCapture2;
 using namespace std;
+
+const int radius = 5;
 
 int main()
 {
@@ -14,12 +18,21 @@ cout << "My laser pointer tracker" << endl;
 Error error;
 Camera camera;
 CameraInfo camInfo;
+double minVal;
+double maxVal;
+cv::Point minLoc;
+minLoc.x = 1;
+minLoc.y = 1;
+cv::Point maxLoc;
+maxLoc.x = 1;
+maxLoc.y = 1;
+
 
 	// Connect the camera
     error = camera.Connect( 0 );
     if ( error != PGRERROR_OK )
     {
-        std::cout << "Failed to connect to camera" << std::endl;     
+        cout << "Failed to connect to camera" << endl;     
         return false;
     }
     
@@ -27,35 +40,35 @@ CameraInfo camInfo;
     error = camera.GetCameraInfo( &camInfo );
     if ( error != PGRERROR_OK )
     {
-        std::cout << "Failed to get camera info from camera" << std::endl;     
+        cout << "Failed to get camera info from camera" << endl;     
         return false;
     }
-    std::cout << camInfo.vendorName << " "
+    cout << camInfo.vendorName << " "
     		  << camInfo.modelName << " " 
-    		  << camInfo.serialNumber << std::endl;
+    		  << camInfo.serialNumber << endl;
 	
 	error = camera.StartCapture();
     if ( error == PGRERROR_ISOCH_BANDWIDTH_EXCEEDED )
     {
-        std::cout << "Bandwidth exceeded" << std::endl;     
+        cout << "Bandwidth exceeded" << endl;     
         return false;
     }
     else if ( error != PGRERROR_OK )
     {
-        std::cout << "Failed to start image capture" << std::endl;     
+        cout << "Failed to start image capture" << endl;     
         return false;
     } 
 	
 	// capture loop
 	char key = 0;
     while(key != 'q')
-	{
+{
 		// Get the image
 		Image rawImage;
 		Error error = camera.RetrieveBuffer( &rawImage );
 		if ( error != PGRERROR_OK )
 		{
-			std::cout << "capture error" << std::endl;
+			cout << "capture error" << endl;
 			continue;
 		}
 		
@@ -66,10 +79,21 @@ CameraInfo camInfo;
 		// convert to OpenCV Mat
 		unsigned int rowBytes = (double)rgbImage.GetReceivedDataSize()/(double)rgbImage.GetRows();       
 		cv::Mat image = cv::Mat(rgbImage.GetRows(), rgbImage.GetCols(), CV_8UC3, rgbImage.GetData(),rowBytes);
+		//Create the gray image
+		cv::Mat blurimage;
+		cv::GaussianBlur(image,blurimage,cv::Size(3,3),0,0);
+		//find the laser point by finding the brightest point in the image
+   		cv::Mat gray_blurimage;
+		cv::cvtColor(blurimage,gray_blurimage,6);
+		cv::minMaxLoc(gray_blurimage,&minVal, &maxVal,&minLoc,&maxLoc);
+		//Demonstrate the location of the laser point		
+		cout << "the laser point is at:" << maxLoc.x <<","<<maxLoc.y<<endl;
+		cv::circle(image,maxLoc,radius,cv::Scalar(0,0,255),-1);
+		cv::imshow("bright_spot", image);
 		
-		cv::imshow("image", image);
-		key = cv::waitKey(30);        
-	}
+		if(cv::waitKey(1) == 27)
+			break;        
+}
 	
 	error = camera.StopCapture();
     if ( error != PGRERROR_OK )
@@ -82,5 +106,4 @@ CameraInfo camInfo;
 	
 	return 0;
 
-return 0;
 }

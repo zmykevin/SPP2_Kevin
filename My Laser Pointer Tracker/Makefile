@@ -2,12 +2,12 @@
 # To compile the debug verison need to overwrite CXXFLAGS variable to include -ggdb
 
 CC = g++
-OUTPUTNAME = firefly${D}
+OUTPUTNAME = laser_tracker${D}
 INCLUDE =-I/usr/include/flycapture -I/usr/include/opencv2
 CFLAGS = `pkg-config --cflags opencv`
 LIBS = `pkg-config --libs opencv` -lflycapture${D} 
 
-OBJS = firefly.o
+OBJS = laser_tracker.o
 
 ${OUTPUTNAME}: ${OBJS}
 	${CC} -o ${OUTPUTNAME} ${OBJS} ${LIBS} ${COMMON_LIBS} 
