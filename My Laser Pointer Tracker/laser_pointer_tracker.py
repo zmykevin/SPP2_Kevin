@@ -3,9 +3,8 @@ import numpy as np
 import cv2
 
 radius = 5
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 #Step 1 Create a bar to control whether to start the program
-
 #If the switch is turned on start to track the brightest point in the frame
 while(True):
     ret,frame = cap.read()

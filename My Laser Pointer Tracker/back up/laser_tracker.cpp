@@ -6,7 +6,6 @@
 #include <opencv/cv.h>
 #include <iostream>
 #include <stdio.h>
-#include <ctime>
 
 using namespace FlyCapture2;
 using namespace std;
@@ -29,7 +28,7 @@ maxLoc.x = 1;
 maxLoc.y = 1;
 
 
-    // Connect the camera
+	// Connect the camera
     error = camera.Connect( 0 );
     if ( error != PGRERROR_OK )
     {
@@ -62,10 +61,6 @@ maxLoc.y = 1;
 	
 	// capture loop
 	char key = 0;
-int start = clock();
-int pause;
-double gap;
-cout << "start time is:" << start << endl;
     while(key != 'q')
 {
 		// Get the image
@@ -86,23 +81,13 @@ cout << "start time is:" << start << endl;
 		cv::Mat image = cv::Mat(rgbImage.GetRows(), rgbImage.GetCols(), CV_8UC3, rgbImage.GetData(),rowBytes);
 		//Create the gray image
 		cv::Mat blurimage;
-		cv::GaussianBlur(image,blurimage,cv::Size(5,5),0,0);
+		cv::GaussianBlur(image,blurimage,cv::Size(3,3),0,0);
 		//find the laser point by finding the brightest point in the image
    		cv::Mat gray_blurimage;
 		cv::cvtColor(blurimage,gray_blurimage,6);
 		cv::minMaxLoc(gray_blurimage,&minVal, &maxVal,&minLoc,&maxLoc);
-		
-		//Demonstrate the location of the laser point every 0.2 seconds, to reduce noise
-		pause = clock();
-	        gap = double(pause-start)/CLOCKS_PER_SEC*1000;
-		if (gap < 200)
-		   cout << "hasn't reached the gap" << endl;
-		else
-		{
-		   cout << "the laser point is at:" << maxLoc.x <<","<<maxLoc.y<<endl; 	
-		   start = pause;		
-		}		
-		//cout << "the laser point is at:" << maxLoc.x <<","<<maxLoc.y<<endl;
+		//Demonstrate the location of the laser point		
+		cout << "the laser point is at:" << maxLoc.x <<","<<maxLoc.y<<endl;
 		cv::circle(image,maxLoc,radius,cv::Scalar(0,0,255),-1);
 		cv::imshow("bright_spot", image);
 		
