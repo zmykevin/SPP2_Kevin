@@ -11,7 +11,7 @@ from Phidgets.PhidgetException import PhidgetErrorCodes, PhidgetException
 from Phidgets.Events.Events import AttachEventArgs, DetachEventArgs, ErrorEventArgs, InputChangeEventArgs, CurrentChangeEventArgs, StepperPositionChangeEventArgs, VelocityChangeEventArgs
 from Phidgets.Devices.Stepper import Stepper
 from Phidgets.Phidget import PhidgetLogLevel
-
+from kinematics import *
 #Define several important factors about the two stepper motors
 STEPPER_1_CIRCLE = 16457
 STEPPER_2_CIRCLE = 85970
@@ -90,19 +90,19 @@ try:
     stepper.setOnAttachHandler(StepperAttached)
     stepper.setOnDetachHandler(StepperDetached)
     stepper.setOnErrorhandler(StepperError)
-    #stepper.setOnCurrentChangeHandler(StepperCurrentChanged)
-    stepper.setOnInputChangeHandler(StepperInputChanged)
-    stepper.setOnPositionChangeHandler(StepperPositionChanged)
-    stepper.setOnVelocityChangeHandler(StepperVelocityChanged)
+    #stepper.setOnCurrentChangeHandler(StepperCurrentChanged)yt
+   # stepper.setOnInputChangeHandler(StepperInputChanged)
+    #stepper.setOnPositionChangeHandler(StepperPositionChanged)
+    #stepper.setOnVelocityChangeHandler(StepperVelocityChanged)
 
     #do the samething for stepper_1
     stepper_1.setOnAttachHandler(StepperAttached)
     stepper_1.setOnDetachHandler(StepperDetached)
     stepper_1.setOnErrorhandler(StepperError)
     #stepper_1.setOnCurrentChangeHandler(StepperCurrentChanged)
-    stepper_1.setOnInputChangeHandler(StepperInputChanged)
-    stepper_1.setOnPositionChangeHandler(StepperPositionChanged)
-    stepper_1.setOnVelocityChangeHandler(StepperVelocityChanged)
+    #stepper_1.setOnInputChangeHandler(StepperInputChanged)
+    #stepper_1.setOnPositionChangeHandler(StepperPositionChanged)
+    #stepper_1.setOnVelocityChangeHandler(StepperVelocityChanged)
 except PhidgetException as e:
     print("Phidget Exception %i: %s" % (e.code, e.details))
     print("Exiting....")
@@ -164,9 +164,16 @@ try:
             target_position_2 = angel2step(float(target_angel_2),2)
             stepper.setTargetPosition(0,target_position_1)
             stepper_1.setTargetPosition(0,target_position_2)
-            #sleep(1)
-            print ("the current position for motor 1 is %lf"% (step2angel(stepper.getCurrentPosition(0),1)))
-            print ("the current position for motor 2 is %lf"% (step2angel(stepper_1.getCurrentPosition(0),2)))
+            sleep(1)
+            current_1 = step2angel(stepper.getCurrentPosition(0),1)
+            current_2 = step2angel(stepper_1.getCurrentPosition(0),2)
+            print ("the current position for motor 1 is %lf"% (current_1))
+            print ("the current position for motor 2 is %lf"% (current_2))
+            projection_point = forward_kinematics(current_1,current_2)
+            print projection_point
+            lp = np.matrix([[HEAD_POINT_X],[HEAD_POINT_Y],[HEAD_POINT_Z]])
+            [s1,s2] = inverse_kinematics(projection_point,lp)
+            print s1,s2
         '''position = [1000,-1000,0]
         for i in position:
             stepper.setTargetPosition(0,i)
@@ -174,6 +181,9 @@ try:
     except KeyboardInterrupt:
         pass
     print("down")
+    stepper.setTargetPosition(0,0)
+    stepper_1.setTargetPosition(0,0)
+    sleep(2)
     stepper.setEngaged(0,False)
     stepper_1.setEngaged(0,False)
     sleep(1)

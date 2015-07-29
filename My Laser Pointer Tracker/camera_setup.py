@@ -47,4 +47,4 @@ def find_brightest_point(image):
     #Apply Gaussian Blur
     gray_image = cv2.GaussianBlur(gray_image,(Gaussian_Ratio,Gaussian_Ratio),0)
     (minVal, maxVal, minLoc,maxLoc) = cv2.minMaxLoc(gray_image)
-    return maxLoc
+    return maxVal,maxLoc

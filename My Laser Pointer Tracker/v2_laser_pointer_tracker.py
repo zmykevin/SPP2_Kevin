@@ -111,6 +111,8 @@ if __name__ == "__main__":
         gray = cv2.GaussianBlur(gray_image,(radius,radius),0)
         (minVal, maxVal, minLoc,maxLoc) = cv2.minMaxLoc(gray)
         if (time.time()-start_time)*1000 >= 250:
+            print ("intensity:")
+            print maxVal
             print ("The laser point is at:")
             #print out the filtered location
             filtered_position = filtered_location(point_duration)
