@@ -1,0 +1,85 @@
+__author__ = 'kevin'
+from camera_setup import *
+from stepper_motor_setup import *
+from time import sleep
+import csv
+
+def drange(start,stop,step):
+    r = start
+    while r != stop:
+        yield r
+        r += step
+
+################Initialize Stepper Motors#####################
+[Stepper_1,Stepper_2] = stepper_init()
+#Setup the current position as zero position
+Stepper_1.setCurrentPosition(0,0)
+Stepper_2.setCurrentPosition(0,0)
+#Engage the Stepper Motors
+Stepper_1.setEngaged(0,True)
+Stepper_2.setEngaged(0,True)
+#Setup speed, acceleration, and current
+setup_limit(Stepper_1,0,57543,0.26,8000)#acceleration,current & velocity
+setup_limit(Stepper_2,0,180000,0.26,40000)
+
+sleep(2)
+
+################Initialize Camera#####################
+MyCamera = flycamera_init()
+MyCamera.start_capture()
+
+###############Initialize the output file###########################
+reference_table = []
+start = True
+for i in drange(-60,75,0.5):
+    for j in drange(-20,-90,-0.5):
+        if start == True or j == -20:
+            target_position_1 = angel2step(i,1)
+            target_position_2 = angel2step(j,2)
+            Stepper_1.setTargetPosition(0,target_position_1)
+            Stepper_2.setTargetPosition(0,target_position_2)
+            sleep(1)
+            start = False
+        else:
+            target_position_1 = angel2step(i,1)
+            target_position_2 = angel2step(j,2)
+            Stepper_1.setTargetPosition(0,target_position_1)
+            Stepper_2.setTargetPosition(0,target_position_2)
+            sleep(0.001)
+        myimage = undistort_image(MyCamera)
+        [b_intensity,b_location] = find_brightest_point(myimage)
+        if b_intensity > 100:
+            cv2.circle(myimage,b_location,5,(0,0,255),-1)
+            current_1 = step2angel(Stepper_1.getCurrentPosition(0),1)
+            current_2 = step2angel(Stepper_2.getCurrentPosition(0),2)
+            print current_1,current_2
+            print b_location
+            reference_table.append([current_1,current_2,b_location[1],b_location[0]])
+        cv2.imshow("image",myimage)
+        if cv2.waitKey(1) == 27:
+            break
+cv2.destroyAllWindows()
+################################Start to write to the csv table##############################
+with open('reference_table.csv','w') as csvfile:
+    writer = csv.writer(csvfile)
+    for r in reference_table:
+        writer.writerow(r)
+################Terminate camera and Motors#####################
+MyCamera.stop_capture()
+MyCamera.disconnect()
+try:
+    #Move to the original spot
+    Stepper_1.setTargetPosition(0,0)
+    Stepper_2.setTargetPosition(0,0)
+    sleep(3)
+    #Turn off the engage of the motors
+    Stepper_1.setEngaged(0,False)
+    Stepper_2.setEngaged(0,False)
+    sleep(1)
+    Stepper_1.closePhidget()
+    Stepper_2.closePhidget()
+except PhidgetException as e:
+    print("Phidget Exception %i: %s" % (e.code, e.details))
+    print("Exiting....")
+    exit(1)
+exit(0)
