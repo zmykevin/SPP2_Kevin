@@ -1,17 +1,16 @@
 __author__ = 'kevin'
 import cv2
 import numpy as np
-from camera2world_calib import *
+from camera_setup import *
 
-world_c = [np.matrix([[50.89],[0],[1]]),np.matrix([[103.89],[-50],[1]]),np.matrix([[166.89],[0],[1]]),np.matrix([[103.89],[50],[1]])]
 original_ref = []
 transform_ref = []
-global H
 
 def original_point(event,x,y,flag,param):
     if  event == cv2.EVENT_LBUTTONDOWN:
         if len(original_ref) < 4:
             o_p = np.array([[x,y]])
+            print o_p
             original_ref.append(o_p)
 
 def destination_point(event,x,y,flag,param):
@@ -35,62 +34,26 @@ def plane_transformation(left_image,left_p,right_p):
     new_image = cv2.warpPerspective(left_image,H,(left_image.shape[1],left_image.shape[0]))
     return new_image,H
 
-def show_result(event,x,y,flag,param):
-    if event == cv2.EVENT_LBUTTONDOWN:
-        the_p = np.matrix([[x],
-                           [y],
-                           [1]])
-        trans_inv = inv(My_H.transpose()*My_H)*My_H.transpose()
-        result = np.dot(trans_inv,the_p)
-        print result
 
-def show_transform(event,x,y,flag,param):
-    if event == cv2.EVENT_LBUTTONDOWN:
-        the_p = np.matrix([[x],[y],[1]])
-        result = frame_transformation(the_p)
-        print result
-
-image_1 = cv2.imread("final position.png",-1)
-image_2 = cv2.imread("after position.png",-1)
-cv2.namedWindow("image_1")
-cv2.namedWindow("image_2")
-cv2.setMouseCallback("image_1",original_point)
-cv2.setMouseCallback("image_2",destination_point)
-
-
-while True:
-    cv2.imshow("image_1",image_1)
-    cv2.imshow("image_2",image_2)
-    if cv2.waitKey(1) == ord('y'):
-        [result,H] = plane_transformation(image_1,original_ref,transform_ref)
-        cv2.imshow("final",result)
-    elif cv2.waitKey(1) == 27:
+#Initialize the flycamera
+Myflycap = flycamera_init()
+Myflycap.start_capture()
+#Define the windows to get the mouse event
+cv2.namedWindow("4_pt")
+cv2.setMouseCallback("4_pt",original_point)
+set_up = True
+while set_up:
+    image = undistort_image(Myflycap)
+    cv2.imshow("4_pt",image)
+    if cv2.waitKey(1) == 27:
+        print("4 points are selected")
         break
-cv2.destroyAllWindows()
-print H
 
-T_R = []
-for i in transform_ref:
-    k = np.matrix([[i[0,0]],
-                   [i[0,1]],
-                   [1]])
-    T_R.append(k)
-global My_H
-My_H = homography_matrix(T_R,world_c)
-print My_H
-
-cv2.namedWindow("transform")
-cv2.setMouseCallback("transform",show_result)
-while True:
-    cv2.imshow("transform",image_2)
+while(True):
+    image2 = undistort_image(Myflycap)
+    [new_image,H] = four_pts_transormation(image2,original_ref)
+    cv2.imshow("after",new_image)
     if cv2.waitKey(1) == 27:
         break
-
-cv2.namedWindow("transform2")
-cv2.setMouseCallback("transform2",show_transform)
-while True:
-    cv2.imshow("transform2",image_1)
-    if cv2.waitKey(1) == 27:
-        break
-cv2.destroyAllWindows()
-
+Myflycap.stop_capture()
+Myflycap.disconnect()

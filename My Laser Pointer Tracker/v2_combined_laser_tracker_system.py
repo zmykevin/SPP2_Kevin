@@ -1,5 +1,4 @@
 __author__ = 'kevin'
-__author__ = 'kevin'
 #import system libraries
 from time import sleep
 import time
@@ -72,7 +71,7 @@ if __name__ == "__main__":
     with open('reference_table.csv','r') as csvfile:
         csv_f = csv.reader(csvfile)
         for row in csv_f:
-            r_pixel_point = (int(row[3]),int(row[2]))
+            r_pixel_point = (float(row[3]),float(row[2]))
             if r_pixel_point not in P:
                 P.append(r_pixel_point)
                 s_angel = (float(row[0]),float(row[1]))
@@ -104,7 +103,7 @@ if __name__ == "__main__":
         [brightest_intensity,brightest_location]= find_brightest_point(ud_image)
 ######################This is where tracking process happens#################################
 #3. Add the kinematics code to convert the world point coordinate to actual angels that the motors need to move
-        if brightest_intensity >= 180:
+        if brightest_intensity >= 200:
             if not track_start:
                 start_time = time.time()
                 track_start = True

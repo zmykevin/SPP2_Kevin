@@ -14,10 +14,10 @@ setup_limit(S1,0,10,1.2,10)#acceleration,current & velocity
 setup_limit(S2,0,10,0.6,10)
 try:
     while True:
-        for i in xrange(0,-10,-1):
+        for i in xrange(0,-64,-1):
             the_target_position = i
             S1.setTargetPosition(0,i)
-            sleep(0.5)
+            sleep(0.3)
         C_L = S1.getCurrentPosition(0)
         for j in xrange(C_L+1,1):
             the_target_position = j

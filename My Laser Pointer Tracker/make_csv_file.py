@@ -1,10 +1,10 @@
 __author__ = 'kevin'
 import csv
 import time
-
+import numpy as np
 
 def find_the_closest_pixels(the_pixel,pixel_list):
-    min_dif = 10000
+    min_dif = 100000000
     min = (0,0)
     if the_pixel not in pixel_list:
         for i in pixel_list:
@@ -36,25 +36,26 @@ def v2_find_the_closest_pixels(the_pixel,pixel_list):
                 return pixel_list.index(my_min)
     else:
         return pixel_list.index(the_pixel)
-
 if __name__ == "__main__":
     P = []
     T = []
     with open('reference_table.csv','r') as csvfile:
         csv_f = csv.reader(csvfile)
         for row in csv_f:
-            r_pixel_point = (int(row[3]),int(row[2]))
+            r_pixel_point = (float(row[3]),float(row[2]))
             if r_pixel_point not in P:
                 P.append(r_pixel_point)
                 s_angel = (float(row[0]),float(row[1]))
                 T.append(s_angel)
-    t1 = time.time()
-    a = find_the_closest_pixels((116,357),P)
-    dif_1 = time.time()-t1
-    t2 = time.time()
-    b = v2_find_the_closest_pixels((116,357),P)
-    dif_2 = time.time()-t2
-    print a,b
-    print P[a]
-    print P[b]
-    print dif_1,dif_2
+
+    ########Save a matrix to file
+    saved_matrix_1 = np.zeros((640,480),dtype = "float32")
+    saved_matrix_2 = np.zeros((640,480),dtype = "float32")
+    for i in range(0,640):
+        for j in range(0,480):
+            print(i,j)
+            the_index = find_the_closest_pixels((i,j),P)
+            saved_matrix_1[i,j] = T[the_index][0]
+            saved_matrix_2[i,j] = T[the_index][1]
+    np.savetxt("angel_1.txt",saved_matrix_1)
+    np.savetxt("angel_2.txt",saved_matrix_2)

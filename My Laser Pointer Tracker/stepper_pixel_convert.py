@@ -6,9 +6,33 @@ import csv
 
 def drange(start,stop,step):
     r = start
-    while r != stop:
-        yield r
-        r += step
+    if step < 0:
+        while r > stop:
+            yield r
+            r += step
+    else:
+        while r < stop:
+            yield r
+            r += step
+
+def make_up_pixel(Mytable,current_position_1,current_position_2,brightest_location):
+    step = 0.2
+    prev_position_1 = Mytable[-1][0]
+    prev_position_2 = Mytable[-1][1]
+    prev_bright_spot_y = Mytable[-1][2]
+    prev_bright_spot_x = Mytable[-1][3]
+    dif_S1 = (current_position_1-prev_position_1)*step
+    dif_S2 = (current_position_2-prev_position_2)*step
+    dif_PX = (brightest_location[0]-prev_bright_spot_x)*step
+    dif_PY = (brightest_location[1]-prev_bright_spot_y)*step
+    for s in range(0,5):
+        the_position_1 = Mytable[-1][0]+dif_S1
+        the_position_2 = Mytable[-1][1]+dif_S2
+        the_brightest_x = Mytable[-1][3]+dif_PX
+        the_brightest_y = Mytable[-1][2]+dif_PY
+        Mytable.append([the_position_1,the_position_2,the_brightest_y,the_brightest_x])
+        print the_position_1,the_position_2
+        print the_brightest_x,the_brightest_y
 
 ################Initialize Stepper Motors#####################
 [Stepper_1,Stepper_2] = stepper_init()
@@ -31,21 +55,24 @@ MyCamera.start_capture()
 ###############Initialize the output file###########################
 reference_table = []
 start = True
-for i in drange(-60,75,0.5):
+prev = False
+for i in drange(-45,75,0.1):
     for j in drange(-20,-90,-0.5):
         if start == True or j == -20:
             target_position_1 = angel2step(i,1)
             target_position_2 = angel2step(j,2)
             Stepper_1.setTargetPosition(0,target_position_1)
             Stepper_2.setTargetPosition(0,target_position_2)
-            sleep(1)
+            sleep(0.5)
             start = False
+            prev = False ##So that the first element will not be able to add points
         else:
             target_position_1 = angel2step(i,1)
             target_position_2 = angel2step(j,2)
             Stepper_1.setTargetPosition(0,target_position_1)
             Stepper_2.setTargetPosition(0,target_position_2)
             sleep(0.01)
+            prev = True
         myimage = undistort_image(MyCamera)
         [b_intensity,b_location] = find_brightest_point(myimage)
         if b_intensity > 100:
@@ -54,7 +81,11 @@ for i in drange(-60,75,0.5):
             current_2 = step2angel(Stepper_2.getCurrentPosition(0),2)
             print current_1,current_2
             print b_location
-            reference_table.append([current_1,current_2,b_location[1],b_location[0]])
+            ###############################Change added to make up pixels in between################################
+            if prev == False or len(reference_table) == 0:
+                reference_table.append([current_1,current_2,b_location[1],b_location[0]])
+            else:
+                make_up_pixel(reference_table,current_1,current_2,b_location)
         cv2.imshow("image",myimage)
         if cv2.waitKey(1) == 27:
             break

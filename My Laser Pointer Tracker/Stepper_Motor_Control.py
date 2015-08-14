@@ -167,8 +167,8 @@ try:
             sleep(2)
             current_1 = step2angel(stepper.getCurrentPosition(0),1)
             current_2 = step2angel(stepper_1.getCurrentPosition(0),2)
-            print ("the current position for motor 1 is %lf"% (current_1))
-            print ("the current position for motor 2 is %lf"% (current_2))
+            print ("the current position for motor 1 is %lf"% (stepper.getCurrentPosition(0)))
+            print ("the current position for motor 2 is %lf"% (stepper_1.getCurrentPosition(0)))
         '''position = [1000,-1000,0]
         for i in position:
             stepper.setTargetPosition(0,i)
