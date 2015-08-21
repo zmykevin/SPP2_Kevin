@@ -2,11 +2,10 @@ __author__ = 'kevin'
 import flycapture2 as fc2
 import cv2
 import numpy as np
-
 #Define camera matrix and distortion coefficient
 camera_M = np.array([[411.42948014, 0, 331.38683566], [0, 411.0871804, 208.84949458], [0, 0, 1]])
 distortion_coefficient = np.array([-0.33504357,0.07164384, -0.00376871 ,0.0016508  ,0.15057044])
-reference_4_points = [np.array([[296,191]]),np.array([[434,202]]),np.array([[453,441]]),np.array([[227,433]])]
+reference_4_points = [np.array([[374,166]]),np.array([[518,197]]),np.array([[514,429]]),np.array([[286,373]])]
 
 #Define Gaussian blur parameters:
 Gaussian_Ratio = 5

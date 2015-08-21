@@ -146,10 +146,10 @@ try:
     stepper.setEngaged(0,True)
     stepper_1.setEngaged(0,True)
     #Set up the speed, acceleration,and current
-    stepper.setAcceleration(0,77543)
+    stepper.setAcceleration(0,40543)
     stepper.setCurrentLimit(0,0.26)
     stepper.setVelocityLimit(0,10000)
-    stepper_1.setAcceleration(0,180000)
+    stepper_1.setAcceleration(0,100000)
     stepper_1.setCurrentLimit(0,0.26)
     stepper_1.setVelocityLimit(0,60000)
     sleep(2)
@@ -169,10 +169,6 @@ try:
             current_2 = step2angel(stepper_1.getCurrentPosition(0),2)
             print ("the current position for motor 1 is %lf"% (stepper.getCurrentPosition(0)))
             print ("the current position for motor 2 is %lf"% (stepper_1.getCurrentPosition(0)))
-        '''position = [1000,-1000,0]
-        for i in position:
-            stepper.setTargetPosition(0,i)
-            sleep(1)'''
     except KeyboardInterrupt:
         pass
     print("down")
