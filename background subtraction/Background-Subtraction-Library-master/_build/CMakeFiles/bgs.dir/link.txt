@@ -1,0 +1,2 @@
+/usr/bin/ar cr libbgs.a  CMakeFiles/bgs.dir/AdaptiveMedianBGS.cpp.o CMakeFiles/bgs.dir/Eigenbackground.cpp.o CMakeFiles/bgs.dir/GrimsonGMM.cpp.o CMakeFiles/bgs.dir/Image.cpp.o CMakeFiles/bgs.dir/MeanBGS.cpp.o CMakeFiles/bgs.dir/PratiMediodBGS.cpp.o CMakeFiles/bgs.dir/WrenGA.cpp.o CMakeFiles/bgs.dir/ZivkovicAGMM.cpp.o
+/usr/bin/ranlib libbgs.a

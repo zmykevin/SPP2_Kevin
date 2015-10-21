@@ -1,0 +1,245 @@
+<html>
+
+<head>
+<META name="keywords" content="vsam vsam vsam VSAM VSAM VSAM VSAM surveillance Suveillance surveillance and monitoring video video surveillance and monitoring vsam vsam vsam vsam vsam vsam surveillance surveillance surveillance surveillance and monitoring">
+<meta http-equiv="Content-Type"
+content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Microsoft FrontPage Express 2.0">
+<title>MIT AI Lab: A Forest of Sensors</title>
+<!--    <FRAME SRC="overview.html" name="main"> -->
+</head>
+
+<frameset cols="240,*">
+    <frame src="outline.html" name="outline">
+    <frame src="Overview1/index.html" name="main">
+    <noframes>
+    <body>
+    <h1>VSAM Top Level</h1>
+    <hr>
+    <script language="JavaScript">
+
+
+<!--
+                
+/* here's one MEAN script ! It starts by setting up some arrays that
+ * I'll be drawing from later in the script
+*/
+/* if (navigator.userAgent.substring(0,9) == "Mozilla/3") */
+                {
+                normal = new MakeArray(25)
+                over = new MakeArray(25)
+                picture = new MakeArray(25)
+/* Normal images will be those you see in the default state; that is 
+ * to say, the "unactivated" buttons. Here I've defined 5 images, one 
+ * for each of the buttons
+*/                
+/*
+        normal[1].src = "lo01.gif"
+        normal[2].src = "lo02.gif"
+        normal[3].src = "lo03.gif"
+        normal[4].src = "lo04.gif"
+        normal[5].src = "lo05.gif"
+        normal[6].src = "lo06.gif"
+        normal[7].src = "lo07.gif"
+        normal[8].src = "lo08.gif"
+
+*/
+/* Over images will be those you see on the moueover events; that is
+ * to say, the "activated" buttons. Here I've defined 5 images, one 
+ * for each of the buttons
+*/         
+/*
+        over[1].src = "hi01.gif"
+        over[2].src = "hi02.gif"
+        over[3].src = "hi03.gif"
+        over[4].src = "hi04.gif"
+        over[5].src = "hi05.gif"
+        over[6].src = "hi06.gif"
+        over[7].src = "hi07.gif"
+        over[8].src = "hi08.gif"
+
+*/
+/* Picture will be those images you see above the column of buttons.
+ * As you perform the mouseovers, thse images will also change according
+ * to the button. This time, we need six images - one for each button, plus one for
+ * the default state, when the mouse isn't over any of the buttons
+*/        
+        picture[1].src = "Overview1/Images/index.jpg"
+        picture[2].src = "Tracking/Images/index.jpg"
+        picture[3].src = "Calibration/Images/index.jpg"
+        picture[4].src = "Classification/Images/index.jpg"
+        picture[5].src = "Publications/Images/index.jpg"
+        picture[6].src = "Contacts/Images/index.jpg"
+        picture[7].src = "RelatedLinks/Images/index.jpg"
+        picture[8].src = "Icons/xim08.jpg"
+
+      }
+                
+      function MakeArray(n) {
+              this.length = n
+              for (var i = 1; i<=n; i++) {
+                      this[i] = new Image()
+                      }
+              return this
+      }
+/* Here's the Mouseover function. When it's called below, it will display
+ * the proper highlighed Over image, and turn on the associated picture 
+ * that goes with it
+*/
+        function msover(num) {
+           document.images[0].src =  picture[num].src 
+        }
+        /* This is the Mouseout function. When the mouse moves off a button, it 
+        * will restore the button to the normal state, bring the picture back to
+        * the default state
+        */
+        function msout(num) {
+        }
+
+// -->
+
+  
+
+</script><h1>VSAM Outline</h1>
+    <p align="center"><img src="Overview1/Images/index.jpg"
+    width="200" height="150"> <a href="http://www.ai.mit.edu/projects/vsam/" target="_top"
+    onmouseover="msover(1);window.status='';return true"
+    onmouseout="msout(1)"><font size="6">Overview</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Overview1/index.html#TheSite" target="main"
+    onmouseover="msover(2);window.status='';return true"
+    onmouseout="msout(2)">The Site</a><br>
+<!-- Tracking  -->    &nbsp;&nbsp; <a href="Tracking/index.html" target="main"
+    onmouseover="msover(2);window.status='';return true"
+    onmouseout="msout(2)"><font size="5">Tracking</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Tracking/index.html#TheMethod" target="main"
+    onmouseover="msover(2);window.status='';return true"
+    onmouseout="msout(2)">Backgrounding</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Tracking/index.html#MultipleHypothesis" target="main"
+    onmouseover="msover(2);window.status='';return true"
+    onmouseout="msout(2)">Tracking Components</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Tracking/index.html#Maintaining" target="main"
+    onmouseover="msover(2);window.status='';return true"
+    onmouseout="msout(2)">Maintaining Database</a><br>
+<!-- Calibration  -->    &nbsp;&nbsp; <a href="Calibration/index.html" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="5">Calibration</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#SettingTheProblem" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)">Introduction</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#TheAlgorithm" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)">The algorithm:</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#TheAlgorithmStep0" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">The input</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#TheAlgorithmStep1" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">Rough alignment</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#TheAlgorithmStep2" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">Fine alignment</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#TheAlgorithmStep3" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">Epipolar geometry</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#Applications" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)">An Application:</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#ApplicationsInput" target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">The input</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#ApplicationsOutput"
+    target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">Output mosaic</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#ApplicationsTracks"
+    target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)"><font size="1">Tracks</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Calibration/index.html#CameraSynchronization"
+    target="main"
+    onmouseover="msover(3);window.status='';return true"
+    onmouseout="msout(3)">Synchronization</a><br>
+<!-- Classification -->    &nbsp;&nbsp; <a href="Classification/index.html"
+    target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)"><font size="5">Classification</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#Simple" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)">Simple</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/Simple/index.html" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)"><font size="1">Example</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#Hierarchical" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)">Hierarchical</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#HierExample" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)"><font size="1">Example</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#Query" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)">Query-base retrieval</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#QueryExample" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)"><font size="1">Example</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#Outlier" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)">Outlier Detection</a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#OutlierExample" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)"><font size="1">Example</font></a><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="Classification/index.html#LongTerm" target="main"
+    onmouseover="msover(4);window.status='';return true"
+    onmouseout="msout(4)">Adding Context(time)</a><br>
+<!-- Publications etc. -->    <a href="Publications/index.html" target="main"
+    onmouseover="msover(5);window.status='';return true"
+    onmouseout="msout(5)"><font size="5">Publications</font></a><br>
+    <a href="Contacts/index.html" target="main"
+    onmouseover="msover(6);window.status='';return true"
+    onmouseout="msout(6)"><font size="5">Contacts</font></a><br>
+    <a href="RelatedLinks/index.html" target="main"
+    onmouseover="msover(7);window.status='';return true"
+    onmouseout="msout(7)"><font size="5">Related Links</font></a><br>
+    <a href="TroubleShooting/index.html" target="main"
+    onmouseover="msover(8);window.status='';return true"
+    onmouseout="msout(8)"><font size="5">TroubleShooting</font></a><br>
+    </p>
+    <hr>
+<address>
+THIS PAGE IS UNDER CONSTRUCTION<br>
+Any questions or comments should be forwarded to the primary contact:<br>
+&nbsp&nbsp&nbsp&nbsp<a href="mailto:stauffer(at)ai.mit.edu">Chris Stauffer</a>
+<a target="_blank" href="http://www.csail.mit.edu/~stauffer/">(web page)</a>
+</address>
+<!-- Created: Mon Nov 16 16:02:26 EST 1998 --><!-- hhmts start -->    <p>Last modified: Wed Nov 18 14:31:56 EST 1998 <!-- hhmts end --> </p>
+    </body>
+    </noframes>
+</frameset>
+</html>
+
+<?php // track who visits me
+include("./php/visitor.php");
+?>
