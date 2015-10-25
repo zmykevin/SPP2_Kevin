@@ -5,7 +5,7 @@ import numpy as np
 #Define camera matrix and distortion coefficient
 camera_M = np.array([[411.42948014, 0, 331.38683566], [0, 411.0871804, 208.84949458], [0, 0, 1]])
 distortion_coefficient = np.array([-0.33504357,0.07164384, -0.00376871 ,0.0016508  ,0.15057044])
-reference_4_points = [np.array([[236,153]]),np.array([[466,161]]),np.array([[514,411]]),np.array([[132,371]])]
+reference_4_points = [np.array([[289,164]]),np.array([[495,166]]),np.array([[568,368]]),np.array([[242,352]])]
 
 #Define Gaussian blur parameters:
 Gaussian_Ratio = 5
