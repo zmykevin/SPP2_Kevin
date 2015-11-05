@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from copy import deepcopy
 import math
+from scipy import ndimage
 
 
 #Define a function to evaluate whether the pixel matches with one of the gaussian component
@@ -57,40 +58,29 @@ def update_mixture_gaussian(X,matching_models,mixture_gaussian_model,alpha):
     num_gaussian = len(mixture_gaussian_model)
 
     #Deal with the non_matching K Gaussion
-    Non_Matching_GPD_Mixture = np.zeros([X.shape[0],X.shape[1],num_gaussian])
-    for i in range(0,num_gaussian):
-        current_gaussian = mixture_gaussian_model[i]
-        current_mean = current_gaussian[:,:,0]
-        current_SD = current_gaussian[:,:,1]+10**(-8)
-
-        #compute the probability
-        inside_exponential = -0.5 *np.divide(np.square(X-current_mean),np.square(current_SD))#should return a matrix same as frame size
-        GPD = np.multiply(np.true_divide((1/math.sqrt(2*math.pi)),current_SD),np.exp(inside_exponential))
-        Non_Matching_GPD_Mixture[:,:,i] = np.multiply(1-K_Gaussian_matching,GPD)
+    Min_i = 1-K_Gaussian_matching
 
     #Min_Potential_Distribution = np.argmin(Non_Matching_GPD_Mixture,2) + (1-K_Gaussian_matching)
-    Min_Potential_Distribution = np.argmin(Non_Matching_GPD_Mixture,2)
     old_mixture_gaussian_model = deepcopy(mixture_gaussian_model)
-    for i in range(0,num_gaussian):
-        Min_i = np.where(Min_Potential_Distribution == i+1,1,0)
-        #Extract the current gaussian model
-        current_gaussian = old_mixture_gaussian_model[i]
-        current_mean = current_gaussian[:,:,0]
-        current_SD = current_gaussian[:,:,1]+10**(-8)
-        current_weight = current_gaussian[:,:,2]
+    current_gaussian = old_mixture_gaussian_model[num_gaussian-1]
+    current_mean = current_gaussian[:,:,0]
+    current_SD = current_gaussian[:,:,1]+10**(-8)
+    current_weight = current_gaussian[:,:,2]
 
-        #Update mean as the current X
-        mixture_gaussian_model[i][:,:,0] = np.multiply(current_mean,(1-Min_i)) + np.multiply(X,Min_i)
-        #update SD to be high
-        #mixture_gaussian_model[i][:,:,1] = np.multiply(current_SD,(1-Min_i))+np.multiply(np.abs(255-mixture_gaussian_model[i][:,:,0]),Min_i)
-        mixture_gaussian_model[i][:,:,1] = np.multiply(current_SD,(1-Min_i))+np.multiply(255,Min_i)
-        #update weight to be low, set it to 0.01
-        mixture_gaussian_model[i][:,:,2] = np.multiply(current_weight,(1-Min_i)) + Min_i*low_weight
-        #weight_distribution = (np.multiply(current_weight,Min_i)-Min_i*low_weight)/(num_gaussian-1)
-        weight_distribution = (np.multiply(current_weight,Min_i)-Min_i*low_weight)/(num_gaussian-1)
-        for j in range(0,num_gaussian):
-            if j != i:
-                mixture_gaussian_model[j][:,:,2] += weight_distribution
+    #Update mean as the current X
+    mixture_gaussian_model[num_gaussian-1][:,:,0] = np.multiply(current_mean,(1-Min_i)) + np.multiply(X,Min_i)
+    #update SD to be high
+    #mixture_gaussian_model[i][:,:,1] = np.multiply(current_SD,(1-Min_i))+np.multiply(np.abs(255-mixture_gaussian_model[i][:,:,0]),Min_i)
+    #UPDATE THE HIGH VARIANCE
+    new_mean = mixture_gaussian_model[num_gaussian-1][:,:,0]
+    comparison = np.where(np.abs(255-new_mean) > np.abs(0-new_mean),np.abs(255-new_mean),np.abs(0-new_mean))
+    mixture_gaussian_model[num_gaussian-1][:,:,1] = np.multiply(current_SD,(1-Min_i))+np.multiply(comparison,Min_i)
+    #update weight to be low, set it to 0.01
+    mixture_gaussian_model[num_gaussian-1][:,:,2] = np.multiply(current_weight,(1-Min_i)) + Min_i*low_weight
+    #weight_distribution = (np.multiply(current_weight,Min_i)-Min_i*low_weight)/(num_gaussian-1)
+    weight_distribution = (np.multiply(current_weight,Min_i)-Min_i*low_weight)/(num_gaussian-1)
+    for j in range(0,num_gaussian-1):
+        mixture_gaussian_model[j][:,:,2] += weight_distribution
 
     #Deal with the matching K Gaussion
     old_mixture_gaussian_model = deepcopy(mixture_gaussian_model)
@@ -118,9 +108,9 @@ def update_mixture_gaussian(X,matching_models,mixture_gaussian_model,alpha):
         #update SD
         updated_variance_matching_model = np.multiply((1-p),np.multiply(matching_gaussian_i,np.square(current_SD))) + np.multiply(p,np.multiply(matching_gaussian_i,np.square(X-mixture_gaussian_model[i][:,:,0])))
         mixture_gaussian_model[i][:,:,1] = np.multiply(1-matching_gaussian_i,current_SD) + np.sqrt(updated_variance_matching_model)
-
+#Define a function that can determine the percentage of the
 def background_process_heuristic(mixture_gaussian_model,T):
-    #Return a matrix that includes the number of gaussians that matches the background procee
+    #Return a matrix that includes the number of gaussians that matches the background process
     #Return a updated order mixture_gaussian_model
     #Define the number of gaussia models
     num_gaussian = len(mixture_gaussian_model)
@@ -154,19 +144,42 @@ def background_process_heuristic(mixture_gaussian_model,T):
             accumulate_weight = deepcopy(mixture_gaussian_model[i][:,:,2])
         else:
             accumulate_weight += mixture_gaussian_model[i][:,:,2]
-        matching_condition_accumulate = np.where(accumulate_weight > T,1,0)
+        matching_condition_accumulate = np.where(accumulate_weight >= T,1,0)
         matching_condition_current = np.where(matching_condition_accumulate-sum(matching_history)>0,1,0)
         matching_history.append(matching_condition_current)
         background_process_history.append((i+1)*matching_condition_current)
     background_process = sum(background_process_history)
     return background_process
 
+def most_probable_distribution(mixture_gaussian_model):
+    #Return a matrix with the most probable distribution
+    num_gaussian = len(mixture_gaussian_model)
+    '''for i in range(0,num_gaussian):
+        if i == 0:
+            Probability_distribution = mixture_gaussian_model[i][:,:,2]
+        else:
+            Probability_distribution = np.dstack((Probability_distribution,mixture_gaussian_model[i][:,:,2]))
+    return np.amax(Probability_distribution,axis = 2)'''
+    return mixture_gaussian_model[0][:,:,2]
+
+def neighbour_filter(subtraction_background):
+    neighbour_filter = np.array([[1,1,0],[1,0,1],[0,1,1]]);
+    result = ndimage.convolve(subtraction_background,neighbour_filter,mode = 'constant',cval = 0.0);
+    foreground = np.where(subtraction_background == 255,1,0);
+    background = 1-foreground;
+    #Filter the false foreground
+    updated_foreground = np.where(np.multiply(result,foreground) >= 5*255,255,0);
+    #Filter the false background
+    updated_background = np.where(np.multiply(result,background) >= 3*255,255,0);
+    updated_result = updated_foreground + updated_background
+    return updated_result
+
 if __name__ == '__main__':
     print ('Background Subtraction Start')
     #Define the number of gaussina models in the mixed model
     K = 5
     #Define the learning reate
-    alpha = 0.05
+    alpha = 0.2
     #Define initial weight parameter
     i_weight = 0.2
 
@@ -182,16 +195,21 @@ if __name__ == '__main__':
     #Initialize the gaussian mixture
     mixture_gaussian = []
     for i in range(0,K):
-        ret,frame = cap.read()
+
         gaussian_i = np.zeros((frame_height,frame_width,3))#0 = Mean, 1 = Standard Deviation, and 2 = Prior Weight
         #initilize the mean values
-        gaussian_i[:,:,0] = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
         #initialize the standard deviation
-        for j in range(0,3):
+        ret,frame = cap.read()
+        gaussian_i[:,:,0] = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY);
+        for j in range(0,50):
             ret,frame = cap.read()
+            '''if j == 0:
+                gaussian_i[:,:,0] = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            else:
+                gaussian_i[:,:,0] = (gaussian_i[:,:,0]*j + cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY))/(j+1)'''
             gaussian_i[:,:,1] = gaussian_i[:,:,1]+np.abs(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY) - gaussian_i[:,:,0])
         #Get the average value for the standard deviation
-        gaussian_i[:,:,1] = gaussian_i[:,:,1]/3
+        gaussian_i[:,:,1] = gaussian_i[:,:,1]/50
         #Initialize the weights
         gaussian_i[:,:,2] = i_weight*np.ones([frame_height,frame_width])
 
@@ -200,18 +218,19 @@ if __name__ == '__main__':
 
     #Initialize the probability history
     probability_history = []
+    #Define T
+    T = most_probable_distribution(mixture_gaussian)
     #Initialize the background gaussian process
-    background_gaussian_process = background_process_heuristic(mixture_gaussian,0.5)
+    background_gaussian_process = background_process_heuristic(mixture_gaussian,T)
     #Define the video writer
-    #define the codec and create Video Writer oject
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('background_subtraction.avi',fourcc,30.0,(2*frame_width,frame_height))
     while(cap.isOpened()):
         ret,frame = cap.read()
         if ret == True:
             gray_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-
-
+            #gray_frame = cv2.medianBlur(gray_frame,5)
+            #subtraction_mask = cv2.gaussianBlur(gray_frame,(5,5))
             #compute probability and store it in the current probability
             current_probability = mixture_gaussian_probability(gray_frame,mixture_gaussian)
             probability_history.append(current_probability)
@@ -226,15 +245,18 @@ if __name__ == '__main__':
 
             #Determine which are background and which are foreground
             subtraction_mask = np.where(matching_model_matrix > background_gaussian_process,255,0)
+            #subtraction_mask = np.where(matching_model_matrix == 10,255,0)
+            subtraction_mask = neighbour_filter(subtraction_mask)
             subtraction_mask = subtraction_mask.astype(dtype = 'uint8')
-
+            #Write a funcion that can perform a neighbor filter to filter out the bad results
             #update the gaussian parameters
             update_mixture_gaussian(gray_frame,matching_models,mixture_gaussian,alpha)
 
             #background heuristic
-            background_gaussian_process = background_process_heuristic(mixture_gaussian,0.5)
+            T = most_probable_distribution(mixture_gaussian)
+            background_gaussian_process = background_process_heuristic(mixture_gaussian,T)
 
-            #subtraction_mask = cv2.medianBlur(subtraction_mask,5)
+
             image = np.hstack((gray_frame,subtraction_mask))
 
             #Write out the image
