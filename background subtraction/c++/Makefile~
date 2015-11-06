@@ -1,12 +1,12 @@
 CXX ?= g++
 
-CXXFLAGS += -c -Wall $(shell pkg-config --cflags opencv)
+CXXFLAGS += -c -Wall -g $(shell pkg-config --cflags opencv)
 LDFLAGS += $(shell pkg-config --libs --static opencv)
 
-all: opencv_example
+all: background_subtraction_main
 
-opencv_example: example.o; $(CXX) $< -o $@ $(LDFLAGS)
+background_subtraction_main: background_subtraction_main.o; $(CXX) $< -o $@ $(LDFLAGS)
 
 %.o: %.cpp; $(CXX) $< -o $@ $(CXXFLAGS)
 
-clean: ; rm -f example.o opencv_example
+clean: ; rm -f background_subtraction_main.o background_subtraction_main
