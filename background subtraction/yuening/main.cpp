@@ -24,7 +24,6 @@
 #include <iomanip>
 
 #define frame2vec() 
-#define updated_index W_by_SD
 
 using namespace cv;
 using namespace std;
@@ -43,6 +42,7 @@ vector<float> frame2vector(Mat , int, int);
 
 void printMat(const Mat* image, int flag=0);
 void printVector(const vector<float>* array, int wrapAround=0);
+void printVectorInt(const vector<int>* array, int wrapAround=0);
 
 int background_process_heuristic(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, double);
 
@@ -299,19 +299,30 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
 
     // updated_index = np.argsort(W_by_SD,axis = 2)
     int size = (*mixture_gaussian_mean)[0].size();
+    vector<vector<int> > updated_index(num_gaussian, vector<int>(size));
     for (int i=0; i<size; i++){
+        for (int j = 0; j <num_gaussian; j++){
+            updated_index[j][i] = j;
+        }
+    }
+    for (int i=0; i<size; i++){
+        vector<int> updated_index_by_pixel;
         vector<float> W_by_SD_by_pixel;
         for (int j=0; j<num_gaussian; j++){
+            updated_index_by_pixel.push_back(updated_index[j][i]);
             W_by_SD_by_pixel.push_back(W_by_SD[j][i]);
         }
-        sort(W_by_SD_by_pixel.begin(), W_by_SD_by_pixel.end());
+        // Check the sorting order
+        sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] < W_by_SD_by_pixel[i2];});
         for (int j=0; j<num_gaussian; j++){
-            W_by_SD[j][i] = W_by_SD_by_pixel[j];
+            updated_index[j][i] = updated_index_by_pixel[j];
+            W_by_SD[j][i] = W_by_SD_by_pixel[updated_index_by_pixel[j]];
         }
     }
-    for (int i=0; i<num_gaussian; i++){
-        printVector(&(W_by_SD[i]), 32);
-    }
+    // for (int i=0; i<num_gaussian; i++){
+    //     printVectorInt(&(updated_index[i]), 32);
+    //     printVector(&(W_by_SD[i]), 32);
+    // }
 
     // current_mixture_gaussian_model = deepcopy(mixture_gaussian_model)
     // for i in range(0,num_gaussian):
@@ -358,6 +369,26 @@ void printMat(const Mat* image, int flag){
 }
 
 void printVector(const vector<float>* array, int wrapAround){
+    cout<<"Vector:"<<endl;
+    if (wrapAround!=0){
+        int cols = (*array).size()/wrapAround;
+        int rows = (*array).size()%wrapAround;
+        for (int i=0; i<cols; i++){
+            for (int j=0; j<cols; j++){
+                cout<< setw(4)<< (*array).at(i*wrapAround+j);
+            }
+            cout<<endl;
+        }
+    }
+    else{
+        int num = (*array).size();
+        for (int i=0; i<num; i++){
+            cout<< (*array)[i]<<endl;
+        }
+    }
+}
+
+void printVectorInt(const vector<int>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
         int cols = (*array).size()/wrapAround;
