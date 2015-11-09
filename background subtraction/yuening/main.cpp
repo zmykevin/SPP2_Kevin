@@ -58,7 +58,7 @@ void printAllVectorInt(const vector<vector<int>>* array, int wrapAround, int k=N
 
 
 
-
+float gaussProbability(float x, float mean, float stddev);
 int background_process_heuristic(vector<mixture_gaussian>*, double);
 int matching_gaussian(vector<float>*, vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*);
 void sortGaussian(mixture_gaussian* gaussian_model);
@@ -222,8 +222,13 @@ int main(){
 
     }
 
+    float x = 1;
+    float mean = 2;
+    float stddev = 0.2;
+
+    cout << gaussProbability(x, mean, stddev)<<endl;
     // printAllVector(&mixture_gaussian_model, 3, frame_width);
-    printVectorInt(&background_gaussian, frame_width);
+    // printVectorInt(&background_gaussian, frame_width);
     // int background_gaussian_process = background_process_heuristic(&mixture_gaussian_model, 0.5);
     // Define the video writer
     // define the codec and create Video Writer oject
@@ -773,4 +778,8 @@ int backgroundGaussianProcess(mixture_gaussian* gaussian_model, float T){
         }
     }
     return 10;
+}
+
+float gaussProbability(float x, float mean, float stddev){
+    return exp(-(x-mean)*(x-mean)/(2*stddev*stddev))/stddev/sqrt(2*M_PI);
 }
