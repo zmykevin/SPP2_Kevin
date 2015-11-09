@@ -61,6 +61,10 @@ void printAllVectorInt(const vector<vector<int>>* array, int wrapAround, int k=N
 
 int background_process_heuristic(vector<mixture_gaussian>*, double);
 int matching_gaussian(vector<float>*, vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*);
+void sortGaussian(mixture_gaussian* gaussian_model);
+int backgroundGaussianProcess(mixture_gaussian* gaussian_model, float T);
+
+
 
 int main(){
 
@@ -211,7 +215,16 @@ int main(){
     //Initialize the probability history
     // probability_history = []
     //Initialize the background gaussian process
-    int background_gaussian_process = background_process_heuristic(&mixture_gaussian_model, 0.5);
+    vector<int> background_gaussian(frame_height*frame_width);
+    for (int i=0; i<frame_height*frame_width; i++){
+        sortGaussian(&mixture_gaussian_model[i]);
+        background_gaussian[i] = backgroundGaussianProcess(&mixture_gaussian_model[i], 0.5);
+
+    }
+
+    // printAllVector(&mixture_gaussian_model, 3, frame_width);
+    printVectorInt(&background_gaussian, frame_width);
+    // int background_gaussian_process = background_process_heuristic(&mixture_gaussian_model, 0.5);
     // Define the video writer
     // define the codec and create Video Writer oject
     // int fourcc = VideoWriter::fourcc('X','V','I','D');
@@ -747,4 +760,17 @@ void sortGaussian(mixture_gaussian* gaussian_model){
         (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
         (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
     }
+}
+
+int backgroundGaussianProcess(mixture_gaussian* gaussian_model, float T){
+    int num_gaussian = (*gaussian_model).Mean.size();
+    float accumulate_weight = 0;
+
+    for (int i=0; i<num_gaussian; i++){
+        accumulate_weight += (*gaussian_model).Weight[i];
+        if (accumulate_weight >= T){
+            return i+1;
+        }
+    }
+    return 10;
 }
