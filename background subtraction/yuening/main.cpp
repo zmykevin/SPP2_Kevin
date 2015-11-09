@@ -57,7 +57,7 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
 
 
 
-int background_process_heuristic(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, double);
+int background_process_heuristic(vector<mixture_gaussian>*, double);
 int matching_gaussian(vector<float>*, vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*);
 
 int main(){
@@ -140,12 +140,12 @@ int main(){
 
 
 
-    // //Initialize the probability history
-    // // probability_history = []
-    // //Initialize the background gaussian process
-    // int background_gaussian_process = background_process_heuristic(&mixture_gaussian_mean,&mixture_gaussian_stddev, &mixture_gaussian_weights, 0.5);
-    // // Define the video writer
-    // // define the codec and create Video Writer oject
+    //Initialize the probability history
+    // probability_history = []
+    //Initialize the background gaussian process
+    int background_gaussian_process = background_process_heuristic(&mixture_gaussian_model, 0.5);
+    // Define the video writer
+    // define the codec and create Video Writer oject
     // int fourcc = VideoWriter::fourcc('X','V','I','D');
     // VideoWriter out("background_subtraction.avi",fourcc,30.0,Size(2*frame_width,frame_height));
     // while(cap.isOpened()){
@@ -315,11 +315,11 @@ int matching_gaussian(vector<float>* frame, vector<vector<float> >* mixture_gaus
 //         mixture_gaussian_model[i][:,:,1] = np.multiply(1-matching_gaussian_i,current_SD) + np.sqrt(updated_variance_matching_model)
 
 
-int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, vector<vector<float> >* mixture_gaussian_stddev, vector<vector<float> >* mixture_gaussian_weights, double T){
+int background_process_heuristic(vector<mixture_gaussian>* mixture_gaussian_model, double T){
     //Return a matrix that includes the number of gaussians that matches the background procee
     //Return a updated order mixture_gaussian_model
     //Define the number of gaussia models
-    int num_gaussian = (*mixture_gaussian_mean).size();
+    int num_gaussian = (*mixture_gaussian_model)[0].Mean.size();
 
     // for i in range(0,num_gaussian):
     //     if i == 0:
@@ -327,35 +327,35 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
     //     else:
     //         current_W_by_SD = np.divide(mixture_gaussian_model[i][:,:,2],mixture_gaussian_model[i][:,:,1]+10**(-8))
     //         W_by_SD = np.dstack((W_by_SD,current_W_by_SD))
-    vector<vector<float> > W_by_SD;
+    // vector<vector<float> > W_by_SD;
 
-    for (int i=0; i<num_gaussian; i++){
-        vector<float> current_W_by_SD;
-        vector<float> adder;
-        add(pow(10, -8), (*mixture_gaussian_stddev)[i], adder);
-        divide((*mixture_gaussian_weights)[i], adder, current_W_by_SD);
-        W_by_SD.push_back(current_W_by_SD);
-    }
+    // for (int i=0; i<num_gaussian; i++){
+    //     vector<float> current_W_by_SD;
+    //     vector<float> adder;
+    //     add(pow(10, -8), (*mixture_gaussian_stddev)[i], adder);
+    //     divide((*mixture_gaussian_weights)[i], adder, current_W_by_SD);
+    //     W_by_SD.push_back(current_W_by_SD);
+    // }
 
     // updated_index = np.argsort(W_by_SD,axis = 2)
-    int size = (*mixture_gaussian_mean)[0].size();
-    vector<vector<int> > updated_index(num_gaussian, vector<int>(size));
+    int size = (*mixture_gaussian_model).size();
+    vector<vector<int> > updated_index(size, vector<int>(num_gaussian));
     for (int i=0; i<size; i++){
         for (int j = 0; j <num_gaussian; j++){
-            updated_index[j][i] = j;
+            updated_index[i][j] = j;
         }
     }
     for (int i=0; i<size; i++){
         vector<int> updated_index_by_pixel;
         vector<float> W_by_SD_by_pixel;
         for (int j=0; j<num_gaussian; j++){
-            updated_index_by_pixel.push_back(updated_index[j][i]);
-            W_by_SD_by_pixel.push_back(W_by_SD[j][i]);
+            updated_index_by_pixel.push_back(updated_index[i][j]);
+            W_by_SD_by_pixel.push_back((*mixture_gaussian_model[i]).W_S[j]);
         }
         // Check the sorting order
         sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
         for (int j=0; j<num_gaussian; j++){
-            updated_index[j][i] = updated_index_by_pixel[j];
+            updated_index[i][j] = updated_index_by_pixel[j];
             // W_by_SD[j][i] = W_by_SD_by_pixel[updated_index_by_pixel[j]];
         }
     }
@@ -365,9 +365,10 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
     // }
 
     // current_mixture_gaussian_model = deepcopy(mixture_gaussian_model)
-    vector<vector<float> > current_mixture_gaussian_mean(*mixture_gaussian_mean); 
-    vector<vector<float> > current_mixture_gaussian_stddev(*mixture_gaussian_stddev); 
-    vector<vector<float> > current_mixture_gaussian_weights(*mixture_gaussian_weights); 
+    vector<mixture_gaussian> current_mixture_gaussian_model(*mixture_gaussian_model);
+    // vector<vector<float> > current_mixture_gaussian_mean(*mixture_gaussian_mean); 
+    // vector<vector<float> > current_mixture_gaussian_stddev(*mixture_gaussian_stddev); 
+    // vector<vector<float> > current_mixture_gaussian_weights(*mixture_gaussian_weights); 
     // for i in range(0,num_gaussian):
     //     i_th_gaussian_index = updated_index[:,:,i]
     //     present_model = current_mixture_gaussian_model[i]
@@ -378,11 +379,15 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
     //             updated_gaussian_model[:,:,k] = np.multiply(1-mathing_model_j,updated_gaussian_model[:,:,k])+np.multiply(mathing_model_j,current_mixture_gaussian_model[j][:,:,k])
     //     mixture_gaussian_model[4-i] = updated_gaussian_model
     // #mixture_gaussian_model = list(reversed(mixture_gaussian_model))
-    for (int j=0; j<num_gaussian; j++){
-        for (int i=0; i<size; i++){
-                (*mixture_gaussian_mean)[j][i] = current_mixture_gaussian_mean[updated_index[j][i]][i];
-                (*mixture_gaussian_stddev)[j][i] = current_mixture_gaussian_stddev[updated_index[j][i]][i];
-                (*mixture_gaussian_weights)[j][i] = current_mixture_gaussian_weights[updated_index[j][i]][i]; // unnecessary for first run?
+    for (int i=0; i<size; i++){
+        for (int j=0; j<num_gaussian; j++){
+            (*mixture_gaussian_model)[i].Mean[j] = current_mixture_gaussian_model[i].Mean[updated_index[i][j]];
+            (*mixture_gaussian_model)[i].Std[j] = current_mixture_gaussian_model[i].Std[updated_index[i][j]];
+            (*mixture_gaussian_model)[i].Weight[j] = current_mixture_gaussian_model[i].Weight[updated_index[i][j]];
+            (*mixture_gaussian_model)[i].W_S[j] = current_mixture_gaussian_model[i].W_S[updated_index[i][j]];
+            // (*mixture_gaussian_mean)[j][i] = current_mixture_gaussian_mean[updated_index[j][i]][i];
+            // (*mixture_gaussian_stddev)[j][i] = current_mixture_gaussian_stddev[updated_index[j][i]][i];
+            // (*mixture_gaussian_weights)[j][i] = current_mixture_gaussian_weights[updated_index[j][i]][i]; // unnecessary for first run?
         }
     }
 
@@ -392,6 +397,8 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
     //     printVectorInt(&(updated_index[i]),32);
     //     printVector(&(current_mixture_gaussian_weights[i]),32);
     // }
+
+    printAllVector(mixture_gaussian_model, 0, 32);
         
     ///////////////////////////////////////////////// Old algorithm
     // for (int i=0; i<num_gaussian; i++){
@@ -416,21 +423,21 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
 
     // #The next step is to figure out how many num of gaussians for each background process
     // matching_history = []
-    vector<vector<bool>> matching_history;
-    // background_process_history = []
-    // for i in range(0,num_gaussian):
-    vector<float> accumulate_weight(size, 0);
-    // cout<< accumulate_weight.size()<<endl;
-    for (int j=0; j<num_gaussian; j++){
-        vector<bool> matching_condition_accumulate(size,0);
-        for (int i=0; i<size; i++){
-            // cout<<i<<endl;
-            accumulate_weight[i] = accumulate_weight[i] + (*mixture_gaussian_weights)[j][i];
-            matching_condition_accumulate[i] = (accumulate_weight[i] >= T)? 1:0;
-        }
-        // printVectorBool(&matching_condition_accumulate,32);
+    // vector<vector<bool>> matching_history;
+    // // background_process_history = []
+    // // for i in range(0,num_gaussian):
+    // vector<float> accumulate_weight(size, 0);
+    // // cout<< accumulate_weight.size()<<endl;
+    // for (int j=0; j<num_gaussian; j++){
+    //     vector<bool> matching_condition_accumulate(size,0);
+    //     for (int i=0; i<size; i++){
+    //         // cout<<i<<endl;
+    //         accumulate_weight[i] = accumulate_weight[i] + (*mixture_gaussian_weights)[j][i];
+    //         matching_condition_accumulate[i] = (accumulate_weight[i] >= T)? 1:0;
+    //     }
+    //     // printVectorBool(&matching_condition_accumulate,32);
 
-    }
+    // }
     //     if i == 0:
     //         accumulate_weight = deepcopy(mixture_gaussian_model[i][:,:,2])
     //     else:
@@ -606,7 +613,7 @@ vector<float> frame2vector(Mat frame,int frame_height, int frame_width){
     return array;
 }
 
-void vec3to1(vector<vector<float> >* mixture_gaussian_mean, vector<vector<float> >* mixture_gaussian_stddev, vector<vector<float> >* mixture_gaussian_weights, vector<mixture_gaussian> * mixture_gaussian_model){
+void vec4to1(vector<vector<float> >* mixture_gaussian_mean, vector<vector<float> >* mixture_gaussian_stddev, vector<vector<float> >* mixture_gaussian_weights, vector<vector<float> >* mixture_gaussian_W_S, vector<mixture_gaussian> * mixture_gaussian_model){
     //Convert 3 vector<vector<float>> into vector<mixture_gaussian>
     int num_gaussian = (*mixture_gaussian_mean).size();
     int size = (*mixture_gaussian_mean)[0].size();
@@ -615,7 +622,7 @@ void vec3to1(vector<vector<float> >* mixture_gaussian_mean, vector<vector<float>
             (*mixture_gaussian_model)[i].Mean.push_back((*mixture_gaussian_mean)[j][i]);
             (*mixture_gaussian_model)[i].Std.push_back((*mixture_gaussian_stddev)[j][i]);
             (*mixture_gaussian_model)[i].Weight.push_back((*mixture_gaussian_weights)[j][i]);
-            (*mixture_gaussian_model)[i].W_S.push_back(0);
+            (*mixture_gaussian_model)[i].W_S.push_back((*mixture_gaussian_W_S)[j][i]);
         }
     }
 }
