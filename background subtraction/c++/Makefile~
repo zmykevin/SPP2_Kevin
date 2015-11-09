@@ -1,6 +1,6 @@
 CXX ?= g++
 
-CXXFLAGS += -c -Wall -g $(shell pkg-config --cflags opencv)
+CXXFLAGS += -c -Wall -std=c++11 -g $(shell pkg-config --cflags opencv)
 LDFLAGS += $(shell pkg-config --libs --static opencv)
 
 all: background_subtraction_main

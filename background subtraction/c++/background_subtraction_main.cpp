@@ -27,6 +27,8 @@ void vec4to1(vector<float_vec_t >* mixture_gaussian_mean, vector<float_vec_t >* 
 
 int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensity);
 
+void sortGaussian(mixture_gaussian* gaussian_model);
+
 //Start the Main Process
 int main()
 {
@@ -117,12 +119,25 @@ while(1)
     uint8_t* result_data = background_subtraction_result.data;
     for (int i = 0; i < frame_height*frame_width; i ++)
     {
-        mixture_gaussian current_mixture_model = mixture_gaussian_model[i];
+        /*
+        for(int k = 0; k < K; k ++)
+        {
+            cout <<"W_S:" << mixture_gaussian_model[i].W_S[k] << endl;
+            cout <<"Mean:" << mixture_gaussian_model[i].Mean[k] << endl;
+        }
         //background process heusristics
-        
+        */
+        sortGaussian(& mixture_gaussian_model[i]);
+        /*
+        for(int k = 0; k < K; k ++)
+        {
+            cout <<"W_S:" << mixture_gaussian_model[i].W_S[k] << endl;
+            cout <<"Mean:" << mixture_gaussian_model[i].Mean[k] << endl;
+        }
+        */
         //Find the matching models
-        float intensity = 128;
-        int matching_model_num = matching_models(current_mixture_model,intensity);
+        float intensity = frame_vec[i];
+        int matching_model_num = matching_models(mixture_gaussian_model[i],intensity);
         //Define background or foreground
         int background_model = 2;
         if (background_model < matching_model_num)
@@ -184,4 +199,28 @@ int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensi
             return i+1;
     }
     return 10;
+}
+
+void sortGaussian(mixture_gaussian* gaussian_model)
+{
+    int num_gaussian = (*gaussian_model).Mean.size();
+
+    vector<int> updated_index(num_gaussian);
+    for (int i = 0; i <num_gaussian; i++){
+        updated_index[i] = i;
+    }
+       
+    float_vec_t W_by_SD_by_pixel;
+    W_by_SD_by_pixel = (*gaussian_model).W_S;
+
+    sort(updated_index.begin(), updated_index.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
+
+    mixture_gaussian current_mixture_gaussian(*gaussian_model);
+
+    for (int i=0; i<num_gaussian; i++){
+        (*gaussian_model).Mean[i] = current_mixture_gaussian.Mean[updated_index[i]];
+        (*gaussian_model).Std[i] = current_mixture_gaussian.Std[updated_index[i]];
+        (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
+        (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
+    }
 }
