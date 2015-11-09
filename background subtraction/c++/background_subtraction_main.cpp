@@ -5,70 +5,103 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 using namespace cv;
 using namespace std;
 
-typedef vector<double> double_vec_t;
+typedef vector<float> float_vec_t;
 struct mixture_gaussian
 {
-double_vec_t Mean;
-double_vec_t Std;
-double_vec_t Weight;
-double_vec_t W_S;
+float_vec_t Mean;
+float_vec_t Std;
+float_vec_t Weight;
+float_vec_t W_S;
 };
+
+void Initialization(vector<Mat>* initial_mean, Mat* initial_std);
+vector<float> frame2vector(Mat frame,int frame_height, int frame_width);
+
 
 int main()
 {
-cout << "Background Subtraction Start" << endl;
+    cout << "Background Subtraction Start" << endl;
 
-// Define the number of gaussina models in the mixed model
-int K = 5;
-//Define the initialization_model_size
-int initial_size = 40;
+    // Define the number of gaussina models in the mixed model
+    int K = 5;
+    //Define the initialization_model_size
+    int initial_sample_size = 40;
 
-// Define the learning reate
-double alpha = 0.05;
+    // Define the learning reate
+    double alpha = 0.05;
 
 
-// Start to capture the video
-VideoCapture cap("highwayI_raw.AVI");
+    // Start to capture the video
+    VideoCapture cap("highwayI_raw.AVI");
 
-// Get the size dimension of the frame
-int frame_width = (int)cap.get(CAP_PROP_FRAME_WIDTH);
-int frame_height = (int)cap.get(CAP_PROP_FRAME_HEIGHT);
+    // Get the size dimension of the frame
+    int frame_width = (int)cap.get(CAP_PROP_FRAME_WIDTH);
+    int frame_height = (int)cap.get(CAP_PROP_FRAME_HEIGHT);
 //------------------------------------------------//
 //Initialization of the model
-vector<mixture_gaussian> miture_gaussian_model;
-vector<Mat> initial_model;
+    
+    int ret;
+    Mat frame;
+    //Define the initialization of mixture_gaussian_mean
+    vector<float_vec_t> initial_mixture_gaussian_mean(K);
+    vector<float_vec_t> initial_mixture_gaussian_std(K);
+    vector<float_vec_t> initial_mixture_gaussian_weight(K);
+    vector<float_vec_t> initial_mixture_gaussian_WbySD(K);
 
-for (int i = 0; i < K; i ++)
-{
-    Mat initial_frame;
-    Mat initial_gray_frame;
-    cap >> initial_frame;
-    cvtColor(initial_frame,initial_gray_frame,COLOR_BGR2GRAY);
-    initial_model.push_back(initial_gray_frame);
-}
-cout << "The initial mat is set up" << endl;
-
-//for (int i = 0; i < K; i ++)
-//{
-/*
-Mat initial_frame;
-cap >> initial_frame;
-Mat initial_gray_frame;
-cvtColor(initial_frame,initial_gray_frame,COLOR_BGR2GRAY);
-//The next step is to convert the mat file to a vector
-double_vec_t array_frame;
-for(int i = 0; i < frame_height; i ++)
-    for(int j = 0; j < frame_width; j ++)
+    for (int i=0; i<K; i++)
     {
-        double pixel_intensity = (double)initial_gray_frame.at<uchar>(i,j);
-        array_frame.push_back(pixel_intensity);
+        cap >> frame;
+        // initilize the mean values
+        float_vec_t gaussian_mean = frame2vector(frame, frame_height, frame_width);
+        //Append the ith gaussian model to the mixture
+        initial_mixture_gaussian_mean[i] = gaussian_mean;
+        //Initialize the gaussian_stdev
+        float_vec_t gaussian_stddev(frame_height*frame_width, 0);
+        initial_mixture_gaussian_std[i] = gaussian_stddev;
+        //Initialie the gaussian_weight
+        float_vec_t gaussian_weight(frame_height*frame_width,0.2);
+        initial_mixture_gaussian_weight[i] = gaussian_weight;
+        //initialize the gaussian WbySD
+        float_vec_t gaussian_wbySD(frame_height*frame_width,0);
+        initial_mixture_gaussian_WbySD[i] = gaussian_wbySD;
     }
-*/
-//}
+    
+    cout << "initialization of mean is done" << endl;
+    
+    // initialize the standard deviation
+    for (int j = 0; j < initial_sample_size; j++)
+    {
+        cap >> frame;
+        float_vec_t gaussian_i = frame2vector(frame, frame_height, frame_width);
+        //cout << "value at 0,0:" << gaussian_i[0] << endl;
+        for (int k = 0; k < K; k ++)
+        {
+        float_vec_t temp_diff;
+        //cout << "mean at 0,0" << initial_mixture_gaussian_mean[k].at(0) << endl;
+        absdiff(gaussian_i, initial_mixture_gaussian_mean[k], temp_diff);
+        //cout << "temp_diff at 0,0" << temp_diff[0] << endl;
+        add(temp_diff, initial_mixture_gaussian_std[k], initial_mixture_gaussian_std[k]); 
+        //cout << "gaussian_accumulation at 0,0" << initial_mixture_gaussian_std[k][0] << endl;
+        }
+    }
+
+    for (int i = 0; i < K; i ++)
+    {
+        divide(initial_mixture_gaussian_std[i],initial_sample_size,initial_mixture_gaussian_std[i]);
+        add(initial_mixture_gaussian_std[i],pow(10,-8),initial_mixture_gaussian_std[i]);
+        //Define W_bySD
+        cout << initial_mixture_gaussian_weight[i][0] << endl;
+        cout << initial_mixture_gaussian_std[i][0] << endl;
+        divide(initial_mixture_gaussian_weight[i],initial_mixture_gaussian_std[i],initial_mixture_gaussian_WbySD[i]);
+        cout << initial_mixture_gaussian_WbySD[i][0] << endl;
+    }
+    cout << "initialization of std is done" << endl;
+
 
 
 
@@ -89,4 +122,13 @@ while(1)
 
 
 return 0;
+}
+
+vector<float> frame2vector(Mat frame,int frame_height, int frame_width)
+{
+    cvtColor(frame, frame, COLOR_BGR2GRAY);
+    resize(frame, frame, Size(frame_height, frame_width)); //For debugging
+    frame.convertTo(frame, CV_32F);
+    float_vec_t array((float*)frame.data,(float*)frame.data + frame.rows * frame.cols);
+    return array;
 }
