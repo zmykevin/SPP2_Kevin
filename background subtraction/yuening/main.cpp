@@ -47,13 +47,15 @@ struct mixture_gaussian
 // };
 
 vector<float> frame2vector(Mat , int, int);
-void vec3to1(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, vector<mixture_gaussian> *);
+void vec4to1(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, vector<mixture_gaussian> *);
 
 void printMat(const Mat* image, int flag=0);
 void printVector(const vector<float>* array, int wrapAround=0);
 void printVectorInt(const vector<int>* array, int wrapAround=0);
 void printVectorBool(const vector<bool>* array, int wrapAround=0);
 void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAround=0, int k=NUM_GAUSS);
+void printAllVectorInt(const vector<vector<int>>* array, int wrapAround, int k=NUM_GAUSS);
+
 
 
 
@@ -68,8 +70,8 @@ int main(){
     int K = 5;
     // Define the learning reate
     double alpha = 0.05;
-    // Define initial weight parameter
-    double i_weight = 0.2;
+    //Define the initialization_model_size
+    int initial_sample_size = 40;
 
     // Start to capture the video
     VideoCapture cap("highwayI_raw.AVI");
@@ -78,49 +80,109 @@ int main(){
     int frame_width = (int)cap.get(CAP_PROP_FRAME_WIDTH)/10;
     int frame_height = (int)cap.get(CAP_PROP_FRAME_HEIGHT)/10;
 
-    // Initialize the gaussian mixture
-    vector<vector<float> > mixture_gaussian_mean;
-    vector<vector<float> > mixture_gaussian_stddev;
-    vector<vector<float> > mixture_gaussian_weights;
+/////////////////////////// Initialzation
 
     int ret;
     Mat frame;
+    //Define the initialization of mixture_gaussian_mean
+    vector<float_vec_t> initial_mixture_gaussian_mean(K);
+    vector<float_vec_t> initial_mixture_gaussian_std(K);
+    vector<float_vec_t> initial_mixture_gaussian_weight(K);
+    vector<float_vec_t> initial_mixture_gaussian_WbySD(K);
 
-    for (int i=0; i<10; i++){
+    for (int i=0; i<K; i++)
+    {
         cap >> frame;
         // initilize the mean values
-        vector<float> gaussian_mean = frame2vector(frame, frame_height, frame_width);
-        vector<float> gaussian_stddev(frame_height*frame_width, 0);
-        // printVector(&gaussian_mean, frame_width);
-        // initialize the standard deviation
-        for (int j = 0; j < 3; j++){
-            cap >> frame;
-            vector<float> gaussian_i = frame2vector(frame, frame_height, frame_width);
-            vector<float> temp_diff;
-            absdiff(gaussian_i, gaussian_mean, temp_diff);
-            // printVector(&temp_diff, frame_width);
-            add(temp_diff, gaussian_stddev, gaussian_stddev);
-            // printVector(&gaussian_stddev, frame_width);
-        }
-        // Get the average value for the standard deviation
-        vector<float> ones(frame_height*frame_width, 3);
-        divide(gaussian_stddev, ones, gaussian_stddev);
-        // printVector(&gaussian_stddev, frame_width);
-
-        // Initialize the weights
-        vector<float> gaussian_weights(frame_height*frame_width, i_weight);
-
+        float_vec_t gaussian_mean = frame2vector(frame, frame_height, frame_width);
         //Append the ith gaussian model to the mixture
-        mixture_gaussian_mean.push_back(gaussian_mean);
-        mixture_gaussian_stddev.push_back(gaussian_stddev);
-        mixture_gaussian_weights.push_back(gaussian_weights);
-        // cout << "Gaussian_i vector size: "<<mixture_gaussian_mean.size()<<endl;
+        initial_mixture_gaussian_mean[i] = gaussian_mean;
+        //Initialize the gaussian_stdev
+        float_vec_t gaussian_stddev(frame_height*frame_width, 0);
+        initial_mixture_gaussian_std[i] = gaussian_stddev;
+        //Initialie the gaussian_weight
+        float_vec_t gaussian_weight(frame_height*frame_width,0.2);
+        initial_mixture_gaussian_weight[i] = gaussian_weight;
+        //initialize the gaussian WbySD
+        float_vec_t gaussian_wbySD(frame_height*frame_width,0);
+        initial_mixture_gaussian_WbySD[i] = gaussian_wbySD;
     }
+    
+    cout << "initialization of mean is done" << endl;
+    
+    // initialize the standard deviation
+    for (int j = 0; j < initial_sample_size; j++)
+    {
+        cap >> frame;
+        float_vec_t gaussian_i = frame2vector(frame, frame_height, frame_width);
+        //cout << "value at 0,0:" << gaussian_i[0] << endl;
+        for (int k = 0; k < K; k ++)
+        {
+        float_vec_t temp_diff;
+        //cout << "mean at 0,0" << initial_mixture_gaussian_mean[k].at(0) << endl;
+        absdiff(gaussian_i, initial_mixture_gaussian_mean[k], temp_diff);
+        //cout << "temp_diff at 0,0" << temp_diff[0] << endl;
+        add(temp_diff, initial_mixture_gaussian_std[k], initial_mixture_gaussian_std[k]); 
+        //cout << "gaussian_accumulation at 0,0" << initial_mixture_gaussian_std[k][0] << endl;
+        }
+    }
+
+    for (int i = 0; i < K; i ++)
+    {
+        divide(initial_mixture_gaussian_std[i],initial_sample_size,initial_mixture_gaussian_std[i]);
+        add(initial_mixture_gaussian_std[i],pow(10,-8),initial_mixture_gaussian_std[i]);
+        //Define W_bySD
+        // cout << initial_mixture_gaussian_weight[i][0] << endl;
+        // cout << initial_mixture_gaussian_std[i][0] << endl;
+        divide(initial_mixture_gaussian_weight[i],initial_mixture_gaussian_std[i],initial_mixture_gaussian_WbySD[i]);
+        // cout << initial_mixture_gaussian_WbySD[i][0] << endl;
+    }
+    cout << "initialization of std is done" << endl;
+    
+
+    // // Initialize the gaussian mixture
+    // vector<vector<float> > mixture_gaussian_mean;
+    // vector<vector<float> > mixture_gaussian_stddev;
+    // vector<vector<float> > mixture_gaussian_weights;
+
+    // int ret;
+    // Mat frame;
+
+    // for (int i=0; i<10; i++){
+    //     cap >> frame;
+    //     // initilize the mean values
+    //     vector<float> gaussian_mean = frame2vector(frame, frame_height, frame_width);
+    //     vector<float> gaussian_stddev(frame_height*frame_width, 0);
+    //     // printVector(&gaussian_mean, frame_width);
+    //     // initialize the standard deviation
+    //     for (int j = 0; j < 3; j++){
+    //         cap >> frame;
+    //         vector<float> gaussian_i = frame2vector(frame, frame_height, frame_width);
+    //         vector<float> temp_diff;
+    //         absdiff(gaussian_i, gaussian_mean, temp_diff);
+    //         // printVector(&temp_diff, frame_width);
+    //         add(temp_diff, gaussian_stddev, gaussian_stddev);
+    //         // printVector(&gaussian_stddev, frame_width);
+    //     }
+    //     // Get the average value for the standard deviation
+    //     vector<float> ones(frame_height*frame_width, 3);
+    //     divide(gaussian_stddev, ones, gaussian_stddev);
+    //     // printVector(&gaussian_stddev, frame_width);
+
+    //     // Initialize the weights
+    //     vector<float> gaussian_weights(frame_height*frame_width, i_weight);
+
+    //     //Append the ith gaussian model to the mixture
+    //     mixture_gaussian_mean.push_back(gaussian_mean);
+    //     mixture_gaussian_stddev.push_back(gaussian_stddev);
+    //     mixture_gaussian_weights.push_back(gaussian_weights);
+    //     // cout << "Gaussian_i vector size: "<<mixture_gaussian_mean.size()<<endl;
+    // }
 
     vector<mixture_gaussian> mixture_gaussian_model(frame_height*frame_width);
     // cout << "# "<<&mixture_gaussian_model[0]<<endl;
     // cout << "# "<<&mixture_gaussian_model[1]<<endl;
-    vec3to1(&mixture_gaussian_mean,&mixture_gaussian_stddev, &mixture_gaussian_weights, &mixture_gaussian_model);
+    vec4to1(&initial_mixture_gaussian_mean,&initial_mixture_gaussian_std, &initial_mixture_gaussian_weight, &initial_mixture_gaussian_WbySD, &mixture_gaussian_model);
     // printAllVector(&mixture_gaussian_model, 0, frame_width);
     // printAllVector(&mixture_gaussian_model, 1, frame_width);
     // printAllVector(&mixture_gaussian_model, 2, frame_width);
@@ -350,7 +412,7 @@ int background_process_heuristic(vector<mixture_gaussian>* mixture_gaussian_mode
         vector<float> W_by_SD_by_pixel;
         for (int j=0; j<num_gaussian; j++){
             updated_index_by_pixel.push_back(updated_index[i][j]);
-            W_by_SD_by_pixel.push_back((*mixture_gaussian_model[i]).W_S[j]);
+            W_by_SD_by_pixel.push_back((*mixture_gaussian_model)[i].W_S[j]);
         }
         // Check the sorting order
         sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
@@ -399,6 +461,7 @@ int background_process_heuristic(vector<mixture_gaussian>* mixture_gaussian_mode
     // }
 
     printAllVector(mixture_gaussian_model, 0, 32);
+    printAllVectorInt(&updated_index, 32);
         
     ///////////////////////////////////////////////// Old algorithm
     // for (int i=0; i<num_gaussian; i++){
@@ -495,7 +558,7 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
                 int cols = (*array).size()/wrapAround;
                 int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<cols; j++){
+                    for (int j=0; j<rows; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).Mean[iter];
                     }
                     cout<<endl;
@@ -513,7 +576,7 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
                 int cols = (*array).size()/wrapAround;
                 int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<cols; j++){
+                    for (int j=0; j<rows; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).Std[iter];
                     }
                     cout<<endl;
@@ -531,7 +594,7 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
                 int cols = (*array).size()/wrapAround;
                 int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<cols; j++){
+                    for (int j=0; j<rows; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).Weight[iter];
                     }
                     cout<<endl;
@@ -549,7 +612,7 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
                 int cols = (*array).size()/wrapAround;
                 int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<cols; j++){
+                    for (int j=0; j<rows; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).W_S[iter];
                     }
                     cout<<endl;
@@ -565,13 +628,35 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
     }
 }
 
+void printAllVectorInt(const vector<vector<int>>* array, int wrapAround, int k){
+    for (int iter=0; iter<k; iter++){
+        cout<<"Vector:"<<iter<<endl;
+        if (wrapAround!=0){
+            int cols = (*array)[0].size()/wrapAround;
+            int rows = (*array)[0].size()%wrapAround;
+            for (int i=0; i<cols; i++){
+                for (int j=0; j<rows; j++){
+                    cout<< setw(4)<< (*array)[i*wrapAround+j].at(iter);
+                }
+                cout<<endl;
+            }
+        }
+        else{
+            int num = (*array).size();
+            for (int i=0; i<num; i++){
+                cout<< (*array)[i][iter]<<endl;
+            }
+        }        
+    }
+}
+
 void printVectorInt(const vector<int>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
         int cols = (*array).size()/wrapAround;
         int rows = (*array).size()%wrapAround;
         for (int i=0; i<cols; i++){
-            for (int j=0; j<cols; j++){
+            for (int j=0; j<rows; j++){
                 cout<< setw(4)<< (*array).at(i*wrapAround+j);
             }
             cout<<endl;
@@ -591,7 +676,7 @@ void printVectorBool(const vector<bool>* array, int wrapAround){
         int cols = (*array).size()/wrapAround;
         int rows = (*array).size()%wrapAround;
         for (int i=0; i<cols; i++){
-            for (int j=0; j<cols; j++){
+            for (int j=0; j<rows; j++){
                 cout<< setw(4)<< (*array).at(i*wrapAround+j);
             }
             cout<<endl;
