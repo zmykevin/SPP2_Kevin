@@ -23,27 +23,39 @@
 #include <algorithm>
 #include <iomanip>
 
-#define frame2vec() 
-
 using namespace cv;
 using namespace std;
 
-// struct gaussian_pixel
-// {
-//     float mean;
-//     float stddev;
-//     float weights;
+#define NUM_GAUSS 10
+
+typedef vector<float> float_vec_t;
+struct mixture_gaussian
+{
+    float_vec_t Mean;
+    float_vec_t Std;
+    float_vec_t Weight;
+    float_vec_t W_S;
+};
+
+// class mixture_gaussian_test {
+// public:
+//     vector<float> Mean = vector<float>(NUM_GAUSS);
+//     vector<float> Std = vector<float>(NUM_GAUSS);
+//     vector<float> Weight = vector<float>(NUM_GAUSS);
+//     vector<float> W_S = vector<float>(NUM_GAUSS);
+
 // };
 
-// bool sortMat (Mat i,Mat j) { return (i<j); }
-
 vector<float> frame2vector(Mat , int, int);
-
+void vec3to1(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, vector<mixture_gaussian> *);
 
 void printMat(const Mat* image, int flag=0);
 void printVector(const vector<float>* array, int wrapAround=0);
 void printVectorInt(const vector<int>* array, int wrapAround=0);
 void printVectorBool(const vector<bool>* array, int wrapAround=0);
+void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAround=0, int k=NUM_GAUSS);
+
+
 
 int background_process_heuristic(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, double);
 int matching_gaussian(vector<float>*, vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*);
@@ -105,35 +117,52 @@ int main(){
         // cout << "Gaussian_i vector size: "<<mixture_gaussian_mean.size()<<endl;
     }
 
+    vector<mixture_gaussian> mixture_gaussian_model(frame_height*frame_width);
+    // cout << "# "<<&mixture_gaussian_model[0]<<endl;
+    // cout << "# "<<&mixture_gaussian_model[1]<<endl;
+    vec3to1(&mixture_gaussian_mean,&mixture_gaussian_stddev, &mixture_gaussian_weights, &mixture_gaussian_model);
+    // printAllVector(&mixture_gaussian_model, 0, frame_width);
+    // printAllVector(&mixture_gaussian_model, 1, frame_width);
+    // printAllVector(&mixture_gaussian_model, 2, frame_width);
+    // printAllVector(&mixture_gaussian_model, 3, frame_width);
+
+    // vector<mixture_gaussian_test> mixture_try(frame_height*frame_width);
+    // cout << "# "<<&mixture_try[0]<<endl;
+    // cout << "# "<<&mixture_try[1]<<endl;
+
     // cout << "# "<<&mixture_gaussian_stddev[0]<<endl;
     // cout << "# "<<&mixture_gaussian_stddev[1]<<endl;
     // cout << "# "<<&mixture_gaussian_weights[0]<<endl;
     // cout << "# "<<&mixture_gaussian_weights[1]<<endl;
+    // cout << "# "<<&mixture_gaussian_model[0]<<endl;
+    // cout << "# "<<&mixture_gaussian_model[1]<<endl;
 
 
-    //Initialize the probability history
-    // probability_history = []
-    //Initialize the background gaussian process
-    int background_gaussian_process = background_process_heuristic(&mixture_gaussian_mean,&mixture_gaussian_stddev, &mixture_gaussian_weights, 0.5);
-    // Define the video writer
-    // define the codec and create Video Writer oject
-    int fourcc = VideoWriter::fourcc('X','V','I','D');
-    VideoWriter out("background_subtraction.avi",fourcc,30.0,Size(2*frame_width,frame_height));
-    while(cap.isOpened()){
-        ret = cap.read(frame);
-        if (ret){
-            // imshow("display", frame);
-            // waitKey(0);
-            vector<float> gray_frame = frame2vector(frame, frame_height, frame_width);
 
-            //////////////////////////////////////////////////////////////////// Not used
-            //compute probability and store it in the current probability
-            // current_probability = mixture_gaussian_probability(gray_frame,mixture_gaussian)
-            // probability_history.append(current_probability)
-            ///////////////////////////////////////////////////////////////////
 
-            //evaluate the matching models
-            int matching_models = matching_gaussian(&gray_frame,&mixture_gaussian_mean, &mixture_gaussian_stddev, &mixture_gaussian_weights);
+    // //Initialize the probability history
+    // // probability_history = []
+    // //Initialize the background gaussian process
+    // int background_gaussian_process = background_process_heuristic(&mixture_gaussian_mean,&mixture_gaussian_stddev, &mixture_gaussian_weights, 0.5);
+    // // Define the video writer
+    // // define the codec and create Video Writer oject
+    // int fourcc = VideoWriter::fourcc('X','V','I','D');
+    // VideoWriter out("background_subtraction.avi",fourcc,30.0,Size(2*frame_width,frame_height));
+    // while(cap.isOpened()){
+    //     ret = cap.read(frame);
+    //     if (ret){
+    //         // imshow("display", frame);
+    //         // waitKey(0);
+    //         vector<float> gray_frame = frame2vector(frame, frame_height, frame_width);
+
+    //         //////////////////////////////////////////////////////////////////// Not used
+    //         //compute probability and store it in the current probability
+    //         // current_probability = mixture_gaussian_probability(gray_frame,mixture_gaussian)
+    //         // probability_history.append(current_probability)
+    //         ///////////////////////////////////////////////////////////////////
+
+    //         //evaluate the matching models
+    //         int matching_models = matching_gaussian(&gray_frame,&mixture_gaussian_mean, &mixture_gaussian_stddev, &mixture_gaussian_weights);
             // //Compute matching_model_matrix
             // matching_model_matrix = np.zeros((gray_frame.shape[0],gray_frame.shape[1]))
             // for i in range(0,len(matching_models)):
@@ -162,8 +191,8 @@ int main(){
         // else{
         //     break;
         // }
-        }
-    }
+        // }
+    // }
 }
 
 
@@ -171,7 +200,7 @@ int main(){
 int matching_gaussian(vector<float>* frame, vector<vector<float> >* mixture_gaussian_mean, vector<vector<float> >* mixture_gaussian_stddev, vector<vector<float> >* mixture_gaussian_weights){
     float matching_scale = 2.5;
     int num_gaussian = (*mixture_gaussian_mean).size();
-    
+
 }
 // def matching_gaussian(X,mixture_gaussian_model):
 //     matching_scale = 2.5
@@ -451,6 +480,84 @@ void printVector(const vector<float>* array, int wrapAround){
     }
 }
 
+void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAround, int k){
+    for (int iter=0; iter<k; iter++){
+        cout<<"Vector:"<<iter<<endl;
+        if (flag == 0){
+            if (wrapAround!=0){
+                int cols = (*array).size()/wrapAround;
+                int rows = (*array).size()%wrapAround;
+                for (int i=0; i<cols; i++){
+                    for (int j=0; j<cols; j++){
+                        cout<< setw(4)<< (*array).at(i*wrapAround+j).Mean[iter];
+                    }
+                    cout<<endl;
+                }
+            }
+            else{
+                int num = (*array).size();
+                for (int i=0; i<num; i++){
+                    cout<< (*array)[i].Mean[iter]<<endl;
+                }
+            }        
+        }
+        else if (flag == 1){
+            if (wrapAround!=0){
+                int cols = (*array).size()/wrapAround;
+                int rows = (*array).size()%wrapAround;
+                for (int i=0; i<cols; i++){
+                    for (int j=0; j<cols; j++){
+                        cout<< setw(4)<< (*array).at(i*wrapAround+j).Std[iter];
+                    }
+                    cout<<endl;
+                }
+            }
+            else{
+                int num = (*array).size();
+                for (int i=0; i<num; i++){
+                    cout<< (*array)[i].Std[iter]<<endl;
+                }
+            }        
+        }
+        else if (flag == 2){
+            if (wrapAround!=0){
+                int cols = (*array).size()/wrapAround;
+                int rows = (*array).size()%wrapAround;
+                for (int i=0; i<cols; i++){
+                    for (int j=0; j<cols; j++){
+                        cout<< setw(4)<< (*array).at(i*wrapAround+j).Weight[iter];
+                    }
+                    cout<<endl;
+                }
+            }
+            else{
+                int num = (*array).size();
+                for (int i=0; i<num; i++){
+                    cout<< (*array)[i].Weight[iter]<<endl;
+                }
+            }        
+        }
+        else if (flag == 3){
+            if (wrapAround!=0){
+                int cols = (*array).size()/wrapAround;
+                int rows = (*array).size()%wrapAround;
+                for (int i=0; i<cols; i++){
+                    for (int j=0; j<cols; j++){
+                        cout<< setw(4)<< (*array).at(i*wrapAround+j).W_S[iter];
+                    }
+                    cout<<endl;
+                }
+            }
+            else{
+                int num = (*array).size();
+                for (int i=0; i<num; i++){
+                    cout<< (*array)[i].W_S[iter]<<endl;
+                }
+            }        
+        }
+    }
+}
+
 void printVectorInt(const vector<int>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
@@ -499,3 +606,16 @@ vector<float> frame2vector(Mat frame,int frame_height, int frame_width){
     return array;
 }
 
+void vec3to1(vector<vector<float> >* mixture_gaussian_mean, vector<vector<float> >* mixture_gaussian_stddev, vector<vector<float> >* mixture_gaussian_weights, vector<mixture_gaussian> * mixture_gaussian_model){
+    //Convert 3 vector<vector<float>> into vector<mixture_gaussian>
+    int num_gaussian = (*mixture_gaussian_mean).size();
+    int size = (*mixture_gaussian_mean)[0].size();
+    for (int i=0; i<size; i++){
+        for (int j=0; j<num_gaussian; j++){
+            (*mixture_gaussian_model)[i].Mean.push_back((*mixture_gaussian_mean)[j][i]);
+            (*mixture_gaussian_model)[i].Std.push_back((*mixture_gaussian_stddev)[j][i]);
+            (*mixture_gaussian_model)[i].Weight.push_back((*mixture_gaussian_weights)[j][i]);
+            (*mixture_gaussian_model)[i].W_S.push_back(0);
+        }
+    }
+}
