@@ -43,8 +43,10 @@ vector<float> frame2vector(Mat , int, int);
 void printMat(const Mat* image, int flag=0);
 void printVector(const vector<float>* array, int wrapAround=0);
 void printVectorInt(const vector<int>* array, int wrapAround=0);
+void printVectorBool(const vector<bool>* array, int wrapAround=0);
 
 int background_process_heuristic(vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*, double);
+int matching_gaussian(vector<float>*, vector<vector<float> >*, vector<vector<float> >*, vector<vector<float> >*);
 
 int main(){
 
@@ -69,6 +71,7 @@ int main(){
     vector<vector<float> > mixture_gaussian_stddev;
     vector<vector<float> > mixture_gaussian_weights;
 
+    int ret;
     Mat frame;
 
     for (int i=0; i<10; i++){
@@ -114,21 +117,23 @@ int main(){
     int background_gaussian_process = background_process_heuristic(&mixture_gaussian_mean,&mixture_gaussian_stddev, &mixture_gaussian_weights, 0.5);
     // Define the video writer
     // define the codec and create Video Writer oject
-    // int fourcc = fourcc('X','V','I','D');
-    // out = VideoWriter("background_subtraction.avi",fourcc,30.0,(2*frame_width,frame_height));
-    // while(cap.isOpened()){
-    //     ret = cap.read(frame);
-    //     if (ret){
-    //         Mat gray_frame;
-    //         cvtColor(frame, gray_frame, COLOR_BGR2GRAY);
+    int fourcc = VideoWriter::fourcc('X','V','I','D');
+    VideoWriter out("background_subtraction.avi",fourcc,30.0,Size(2*frame_width,frame_height));
+    while(cap.isOpened()){
+        ret = cap.read(frame);
+        if (ret){
+            // imshow("display", frame);
+            // waitKey(0);
+            vector<float> gray_frame = frame2vector(frame, frame_height, frame_width);
 
-
-            // //compute probability and store it in the current probability
+            //////////////////////////////////////////////////////////////////// Not used
+            //compute probability and store it in the current probability
             // current_probability = mixture_gaussian_probability(gray_frame,mixture_gaussian)
             // probability_history.append(current_probability)
+            ///////////////////////////////////////////////////////////////////
 
-            // //evaluate the matching models
-            // matching_models = matching_gaussian(gray_frame,mixture_gaussian)
+            //evaluate the matching models
+            int matching_models = matching_gaussian(&gray_frame,&mixture_gaussian_mean, &mixture_gaussian_stddev, &mixture_gaussian_weights);
             // //Compute matching_model_matrix
             // matching_model_matrix = np.zeros((gray_frame.shape[0],gray_frame.shape[1]))
             // for i in range(0,len(matching_models)):
@@ -157,11 +162,17 @@ int main(){
         // else{
         //     break;
         // }
-            
+        }
+    }
 }
 
 
 // //Define a function to evaluate whether the pixel matches with one of the gaussian component
+int matching_gaussian(vector<float>* frame, vector<vector<float> >* mixture_gaussian_mean, vector<vector<float> >* mixture_gaussian_stddev, vector<vector<float> >* mixture_gaussian_weights){
+    float matching_scale = 2.5;
+    int num_gaussian = (*mixture_gaussian_mean).size();
+    
+}
 // def matching_gaussian(X,mixture_gaussian_model):
 //     matching_scale = 2.5
 //     num_gaussian = len(mixture_gaussian)
@@ -313,10 +324,10 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
             W_by_SD_by_pixel.push_back(W_by_SD[j][i]);
         }
         // Check the sorting order
-        sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] < W_by_SD_by_pixel[i2];});
+        sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
         for (int j=0; j<num_gaussian; j++){
             updated_index[j][i] = updated_index_by_pixel[j];
-            W_by_SD[j][i] = W_by_SD_by_pixel[updated_index_by_pixel[j]];
+            // W_by_SD[j][i] = W_by_SD_by_pixel[updated_index_by_pixel[j]];
         }
     }
     // for (int i=0; i<num_gaussian; i++){
@@ -325,6 +336,9 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
     // }
 
     // current_mixture_gaussian_model = deepcopy(mixture_gaussian_model)
+    vector<vector<float> > current_mixture_gaussian_mean(*mixture_gaussian_mean); 
+    vector<vector<float> > current_mixture_gaussian_stddev(*mixture_gaussian_stddev); 
+    vector<vector<float> > current_mixture_gaussian_weights(*mixture_gaussian_weights); 
     // for i in range(0,num_gaussian):
     //     i_th_gaussian_index = updated_index[:,:,i]
     //     present_model = current_mixture_gaussian_model[i]
@@ -335,10 +349,59 @@ int background_process_heuristic(vector<vector<float> >* mixture_gaussian_mean, 
     //             updated_gaussian_model[:,:,k] = np.multiply(1-mathing_model_j,updated_gaussian_model[:,:,k])+np.multiply(mathing_model_j,current_mixture_gaussian_model[j][:,:,k])
     //     mixture_gaussian_model[4-i] = updated_gaussian_model
     // #mixture_gaussian_model = list(reversed(mixture_gaussian_model))
+    for (int j=0; j<num_gaussian; j++){
+        for (int i=0; i<size; i++){
+                (*mixture_gaussian_mean)[j][i] = current_mixture_gaussian_mean[updated_index[j][i]][i];
+                (*mixture_gaussian_stddev)[j][i] = current_mixture_gaussian_stddev[updated_index[j][i]][i];
+                (*mixture_gaussian_weights)[j][i] = current_mixture_gaussian_weights[updated_index[j][i]][i]; // unnecessary for first run?
+        }
+    }
+
+    // for (int i=0; i<num_gaussian; i++){
+    //     vector<float> printarray = (*mixture_gaussian_weights)[i];
+    //     printVector(&printarray, 32);
+    //     printVectorInt(&(updated_index[i]),32);
+    //     printVector(&(current_mixture_gaussian_weights[i]),32);
+    // }
+        
+    ///////////////////////////////////////////////// Old algorithm
+    // for (int i=0; i<num_gaussian; i++){
+    //     vector<int> i_th_gaussian_index = updated_index[i];
+    //     vector<float> updated_gaussian_mean(present_gaussian_mean.size(),0);
+    //     vector<float> updated_gaussian_stddev(present_gaussian_stddev.size(),0);
+    //     vector<float> updated_gaussian_weights(present_gaussian_weights.size(),0);
+    //     for (int j=0; j<num_gaussian; j++){
+    //         vector<bool> masking_model(present_gaussian_weights.size(),0);
+    //         vector<bool> masking_model_inverse(present_gaussian_weights.size(),1);
+    //         for (int k=0; k<present_gaussian_weights.size(); k++){
+    //             if (i_th_gaussian_index[k] == j){
+    //                 masking_model[k] = 1;
+    //                 masking_model_inverse = 0;
+    //             }
+    //         }
+    //         add(updated_gaussian_mean)//Unfished, use other method.
+    //     }
+    // }
+    /////////////////////////////////////////////////////////////
+
+
     // #The next step is to figure out how many num of gaussians for each background process
     // matching_history = []
+    vector<vector<bool>> matching_history;
     // background_process_history = []
     // for i in range(0,num_gaussian):
+    vector<float> accumulate_weight(size, 0);
+    // cout<< accumulate_weight.size()<<endl;
+    for (int j=0; j<num_gaussian; j++){
+        vector<bool> matching_condition_accumulate(size,0);
+        for (int i=0; i<size; i++){
+            // cout<<i<<endl;
+            accumulate_weight[i] = accumulate_weight[i] + (*mixture_gaussian_weights)[j][i];
+            matching_condition_accumulate[i] = (accumulate_weight[i] >= T)? 1:0;
+        }
+        // printVectorBool(&matching_condition_accumulate,32);
+
+    }
     //     if i == 0:
     //         accumulate_weight = deepcopy(mixture_gaussian_model[i][:,:,2])
     //     else:
@@ -389,6 +452,26 @@ void printVector(const vector<float>* array, int wrapAround){
 }
 
 void printVectorInt(const vector<int>* array, int wrapAround){
+    cout<<"Vector:"<<endl;
+    if (wrapAround!=0){
+        int cols = (*array).size()/wrapAround;
+        int rows = (*array).size()%wrapAround;
+        for (int i=0; i<cols; i++){
+            for (int j=0; j<cols; j++){
+                cout<< setw(4)<< (*array).at(i*wrapAround+j);
+            }
+            cout<<endl;
+        }
+    }
+    else{
+        int num = (*array).size();
+        for (int i=0; i<num; i++){
+            cout<< (*array)[i]<<endl;
+        }
+    }
+}
+
+void printVectorBool(const vector<bool>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
         int cols = (*array).size()/wrapAround;

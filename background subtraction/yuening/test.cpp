@@ -36,13 +36,20 @@ int main(){
     imshow("show", image);
     Mat resized_image;
     resize(image,resized_image,Size(10,10));
-    printMat(&resized_image,0);
+    // printMat(&resized_image,0);
     resized_image.convertTo(resized_image, CV_32F);
-    printMat(&resized_image,1);
+    // printMat(&resized_image,1);
     vector<float> array((float*)resized_image.data,(float*)resized_image.data + resized_image.rows * resized_image.cols);
     printVector(&array, 10);
-    imshow("show_resized", resized_image);
-    waitKey(0);
+    // imshow("show_resized", resized_image);
+    // waitKey(0);
+
+    vector<float> onesarray(array.size(),2);
+    vector<float> result;
+    vector<bool> mask(array.size(),1);
+    mask[0] = 0;
+    add(array, onesarray, result, mask);
+    printVector(&result, 10);
     return 0;   
 }
 
