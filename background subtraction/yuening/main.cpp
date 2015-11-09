@@ -26,7 +26,7 @@
 using namespace cv;
 using namespace std;
 
-#define NUM_GAUSS 10
+#define NUM_GAUSS 5
 
 typedef vector<float> float_vec_t;
 struct mixture_gaussian
@@ -177,6 +177,12 @@ int main(){
     //     mixture_gaussian_stddev.push_back(gaussian_stddev);
     //     mixture_gaussian_weights.push_back(gaussian_weights);
     //     // cout << "Gaussian_i vector size: "<<mixture_gaussian_mean.size()<<endl;
+    // }
+
+    // for (int i=0; i<K; i++){
+    //     cout<<"vector"<<endl;
+    //     printVector(&initial_mixture_gaussian_mean[i], frame_width);
+
     // }
 
     vector<mixture_gaussian> mixture_gaussian_model(frame_height*frame_width);
@@ -408,18 +414,26 @@ int background_process_heuristic(vector<mixture_gaussian>* mixture_gaussian_mode
         }
     }
     for (int i=0; i<size; i++){
-        vector<int> updated_index_by_pixel;
+        
+        // vector<int> updated_index_by_pixel;
         vector<float> W_by_SD_by_pixel;
-        for (int j=0; j<num_gaussian; j++){
-            updated_index_by_pixel.push_back(updated_index[i][j]);
-            W_by_SD_by_pixel.push_back((*mixture_gaussian_model)[i].W_S[j]);
-        }
+        // updated_index_by_pixel = updated_index[i];
+        W_by_SD_by_pixel = (*mixture_gaussian_model)[i].W_S;
+
+        // for (int j=0; j<num_gaussian; j++){
+        //     updated_index_by_pixel.push_back(updated_index[i][j]);
+        //     W_by_SD_by_pixel.push_back((*mixture_gaussian_model)[i].W_S[j]);
+        // }
+        // printVector(&W_by_SD_by_pixel);
+        // printVectorInt(&updated_index_by_pixel);
         // Check the sorting order
-        sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
-        for (int j=0; j<num_gaussian; j++){
-            updated_index[i][j] = updated_index_by_pixel[j];
+        sort(updated_index[i].begin(), updated_index[i].end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
+        // sort(updated_index_by_pixel.begin(), updated_index_by_pixel.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
+        // printVectorInt(&updated_index_by_pixel);
+        // for (int j=0; j<num_gaussian; j++){
+            // updated_index[i][j] = updated_index_by_pixel[j];
             // W_by_SD[j][i] = W_by_SD_by_pixel[updated_index_by_pixel[j]];
-        }
+        // }
     }
     // for (int i=0; i<num_gaussian; i++){
     //     printVectorInt(&(updated_index[i]), 32);
@@ -460,7 +474,7 @@ int background_process_heuristic(vector<mixture_gaussian>* mixture_gaussian_mode
     //     printVector(&(current_mixture_gaussian_weights[i]),32);
     // }
 
-    printAllVector(mixture_gaussian_model, 0, 32);
+    // printAllVector(mixture_gaussian_model, 2, 32);
     printAllVectorInt(&updated_index, 32);
         
     ///////////////////////////////////////////////// Old algorithm
@@ -498,7 +512,7 @@ int background_process_heuristic(vector<mixture_gaussian>* mixture_gaussian_mode
     //         accumulate_weight[i] = accumulate_weight[i] + (*mixture_gaussian_weights)[j][i];
     //         matching_condition_accumulate[i] = (accumulate_weight[i] >= T)? 1:0;
     //     }
-    //     // printVectorBool(&matching_condition_accumulate,32);
+        // printVectorBool(&matching_condition_accumulate,32);
 
     // }
     //     if i == 0:
@@ -534,9 +548,9 @@ void printVector(const vector<float>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
         int cols = (*array).size()/wrapAround;
-        int rows = (*array).size()%wrapAround;
+        // int rows = (*array).size()%wrapAround;
         for (int i=0; i<cols; i++){
-            for (int j=0; j<cols; j++){
+            for (int j=0; j<wrapAround; j++){
                 cout<< setw(4)<< (*array).at(i*wrapAround+j);
             }
             cout<<endl;
@@ -556,9 +570,9 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
         if (flag == 0){
             if (wrapAround!=0){
                 int cols = (*array).size()/wrapAround;
-                int rows = (*array).size()%wrapAround;
+                // int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<rows; j++){
+                    for (int j=0; j<wrapAround; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).Mean[iter];
                     }
                     cout<<endl;
@@ -574,9 +588,9 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
         else if (flag == 1){
             if (wrapAround!=0){
                 int cols = (*array).size()/wrapAround;
-                int rows = (*array).size()%wrapAround;
+                // int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<rows; j++){
+                    for (int j=0; j<wrapAround; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).Std[iter];
                     }
                     cout<<endl;
@@ -592,9 +606,9 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
         else if (flag == 2){
             if (wrapAround!=0){
                 int cols = (*array).size()/wrapAround;
-                int rows = (*array).size()%wrapAround;
+                // int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<rows; j++){
+                    for (int j=0; j<wrapAround; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).Weight[iter];
                     }
                     cout<<endl;
@@ -610,9 +624,9 @@ void printAllVector(const vector<mixture_gaussian>* array, int flag, int wrapAro
         else if (flag == 3){
             if (wrapAround!=0){
                 int cols = (*array).size()/wrapAround;
-                int rows = (*array).size()%wrapAround;
+                // int rows = (*array).size()%wrapAround;
                 for (int i=0; i<cols; i++){
-                    for (int j=0; j<rows; j++){
+                    for (int j=0; j<wrapAround; j++){
                         cout<< setw(4)<< (*array).at(i*wrapAround+j).W_S[iter];
                     }
                     cout<<endl;
@@ -632,10 +646,10 @@ void printAllVectorInt(const vector<vector<int>>* array, int wrapAround, int k){
     for (int iter=0; iter<k; iter++){
         cout<<"Vector:"<<iter<<endl;
         if (wrapAround!=0){
-            int cols = (*array)[0].size()/wrapAround;
-            int rows = (*array)[0].size()%wrapAround;
+            int cols = (*array).size()/wrapAround;
+            // int rows = (*array)[0].size()%wrapAround;
             for (int i=0; i<cols; i++){
-                for (int j=0; j<rows; j++){
+                for (int j=0; j<wrapAround; j++){
                     cout<< setw(4)<< (*array)[i*wrapAround+j].at(iter);
                 }
                 cout<<endl;
@@ -654,9 +668,9 @@ void printVectorInt(const vector<int>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
         int cols = (*array).size()/wrapAround;
-        int rows = (*array).size()%wrapAround;
+        // int rows = (*array).size()%wrapAround;
         for (int i=0; i<cols; i++){
-            for (int j=0; j<rows; j++){
+            for (int j=0; j<wrapAround; j++){
                 cout<< setw(4)<< (*array).at(i*wrapAround+j);
             }
             cout<<endl;
@@ -674,9 +688,9 @@ void printVectorBool(const vector<bool>* array, int wrapAround){
     cout<<"Vector:"<<endl;
     if (wrapAround!=0){
         int cols = (*array).size()/wrapAround;
-        int rows = (*array).size()%wrapAround;
+        // int rows = (*array).size()%wrapAround;
         for (int i=0; i<cols; i++){
-            for (int j=0; j<rows; j++){
+            for (int j=0; j<wrapAround; j++){
                 cout<< setw(4)<< (*array).at(i*wrapAround+j);
             }
             cout<<endl;
@@ -709,5 +723,28 @@ void vec4to1(vector<vector<float> >* mixture_gaussian_mean, vector<vector<float>
             (*mixture_gaussian_model)[i].Weight.push_back((*mixture_gaussian_weights)[j][i]);
             (*mixture_gaussian_model)[i].W_S.push_back((*mixture_gaussian_W_S)[j][i]);
         }
+    }
+}
+
+void sortGaussian(mixture_gaussian* gaussian_model){
+    int num_gaussian = (*gaussian_model).Mean.size();
+
+    vector<int> updated_index(num_gaussian);
+    for (int i = 0; i <num_gaussian; i++){
+        updated_index[i] = i;
+    }
+       
+    vector<float> W_by_SD_by_pixel;
+    W_by_SD_by_pixel = (*gaussian_model).W_S;
+
+    sort(updated_index.begin(), updated_index.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
+
+    mixture_gaussian current_mixture_gaussian(*gaussian_model);
+
+    for (int i=0; i<num_gaussian; i++){
+        (*gaussian_model).Mean[i] = current_mixture_gaussian.Mean[updated_index[i]];
+        (*gaussian_model).Std[i] = current_mixture_gaussian.Std[updated_index[i]];
+        (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
+        (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
     }
 }
