@@ -71,7 +71,6 @@ int main()
         initial_mixture_gaussian_WbySD[i] = gaussian_wbySD;
     }
     
-    cout << "initialization of mean is done" << endl;
     
     // initialize the standard deviation
     for (int j = 0; j < initial_sample_size; j++)
@@ -95,13 +94,9 @@ int main()
         divide(initial_mixture_gaussian_std[i],initial_sample_size,initial_mixture_gaussian_std[i]);
         add(initial_mixture_gaussian_std[i],pow(10,-8),initial_mixture_gaussian_std[i]);
         //Define W_bySD
-        cout << initial_mixture_gaussian_weight[i][0] << endl;
-        cout << initial_mixture_gaussian_std[i][0] << endl;
         divide(initial_mixture_gaussian_weight[i],initial_mixture_gaussian_std[i],initial_mixture_gaussian_WbySD[i]);
-        cout << initial_mixture_gaussian_WbySD[i][0] << endl;
     }
-    cout << "initialization of std is done" << endl;
-
+    cout << "initialization is done" << endl;
 
 
 
@@ -109,6 +104,16 @@ while(1)
 {
     Mat frame;
     cap >> frame;
+    float_vec_t frame_vec = frame2vector(frame,frame_height,frame_width);
+    Mat background_subtraction_result;
+    background_subtraction_result = Mat::zeros(frame_height,frame_width,CV_32F);
+    cout << background_subtraction_result << endl;
+
+    for (int i = 0; i < frame_height*frame_width; i ++)
+    {
+
+    }
+    
     Mat gray_frame;
     cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
     imshow("video",gray_frame);
