@@ -20,9 +20,14 @@ float_vec_t W_S;
 };
 
 void Initialization(vector<Mat>* initial_mean, Mat* initial_std);
-vector<float> frame2vector(Mat frame,int frame_height, int frame_width);
 
+float_vec_t frame2vector(Mat frame,int frame_height, int frame_width);
 
+void vec4to1(vector<float_vec_t >* mixture_gaussian_mean, vector<float_vec_t >* mixture_gaussian_stddev, vector<float_vec_t >* mixture_gaussian_weights, vector<float_vec_t >* mixture_gaussian_W_S, vector<mixture_gaussian> * mixture_gaussian_model);
+
+int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensity);
+
+//Start the Main Process
 int main()
 {
     cout << "Background Subtraction Start" << endl;
@@ -97,26 +102,39 @@ int main()
         divide(initial_mixture_gaussian_weight[i],initial_mixture_gaussian_std[i],initial_mixture_gaussian_WbySD[i]);
     }
     cout << "initialization is done" << endl;
+    //Now combined the initialized vector into one big model
+    vector<mixture_gaussian> mixture_gaussian_model(frame_height*frame_width);
+    vec4to1(&initial_mixture_gaussian_mean,&initial_mixture_gaussian_std, &initial_mixture_gaussian_weight, &initial_mixture_gaussian_WbySD, &mixture_gaussian_model);
 
-
-
+//Suppose we have a vector of mixture gaussian already. 
 while(1)
 {
     Mat frame;
     cap >> frame;
     float_vec_t frame_vec = frame2vector(frame,frame_height,frame_width);
     Mat background_subtraction_result;
-    background_subtraction_result = Mat::zeros(frame_height,frame_width,CV_32F);
-    cout << background_subtraction_result << endl;
-
+    background_subtraction_result = Mat::zeros(frame_height,frame_width,CV_8UC1);//Initialize the backgroudn subtraction result
+    uint8_t* result_data = background_subtraction_result.data;
     for (int i = 0; i < frame_height*frame_width; i ++)
     {
+        mixture_gaussian current_mixture_model = mixture_gaussian_model[i];
+        //background process heusristics
+        
+        //Find the matching models
+        float intensity = 128;
+        int matching_model_num = matching_models(current_mixture_model,intensity);
+        //Define background or foreground
+        int background_model = 2;
+        if (background_model < matching_model_num)
+            result_data[i] = 255;
+        //update parameters
 
     }
     
     Mat gray_frame;
     cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
     imshow("video",gray_frame);
+    imshow("background_subtraction",background_subtraction_result);
 
     if(waitKey(30) == 27) //wait for 'esc' key press for 30 ms. If 'esc' key is pressed, break loop
    {
@@ -129,11 +147,41 @@ while(1)
 return 0;
 }
 
-vector<float> frame2vector(Mat frame,int frame_height, int frame_width)
+//This function converts frame to 1D float vector
+float_vec_t frame2vector(Mat frame,int frame_height, int frame_width)
 {
     cvtColor(frame, frame, COLOR_BGR2GRAY);
     resize(frame, frame, Size(frame_height, frame_width)); //For debugging
     frame.convertTo(frame, CV_32F);
     float_vec_t array((float*)frame.data,(float*)frame.data + frame.rows * frame.cols);
     return array;
+}
+
+//This function combines 4 different vectors into 1 vector that is the same size of the num of pixels, and each position has one mixture gaussian model
+void vec4to1(vector<float_vec_t >* mixture_gaussian_mean, vector<float_vec_t >* mixture_gaussian_stddev, vector<float_vec_t >* mixture_gaussian_weights, vector<float_vec_t >* mixture_gaussian_W_S, vector<mixture_gaussian> * mixture_gaussian_model)
+{    //Convert 3 vector<vector<float>> into vector<mixture_gaussian>
+    int num_gaussian = (*mixture_gaussian_mean).size();
+    int size = (*mixture_gaussian_mean)[0].size();
+    for (int i=0; i<size; i++){
+        for (int j=0; j<num_gaussian; j++){
+            (*mixture_gaussian_model)[i].Mean.push_back((*mixture_gaussian_mean)[j][i]);
+            (*mixture_gaussian_model)[i].Std.push_back((*mixture_gaussian_stddev)[j][i]);
+            (*mixture_gaussian_model)[i].Weight.push_back((*mixture_gaussian_weights)[j][i]);
+            (*mixture_gaussian_model)[i].W_S.push_back((*mixture_gaussian_W_S)[j][i]);
+        }
+    }
+}
+int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensity)
+{
+    float std_scale = 2.5;
+    int num_gaussian = mixture_gaussian_model.Mean.size();
+    for(int i = 0; i < num_gaussian; i ++)
+    {
+        float mean_i = mixture_gaussian_model.Mean[i];
+        float std_i = mixture_gaussian_model.Std[i];
+        float difference = pixel_intensity-mean_i;
+        if (difference >= -std_scale*std_i && difference <= std_scale*std_i)
+            return i+1;
+    }
+    return 10;
 }
