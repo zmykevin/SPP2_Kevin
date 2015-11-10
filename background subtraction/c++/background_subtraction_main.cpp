@@ -29,6 +29,8 @@ int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensi
 
 void sortGaussian(mixture_gaussian* gaussian_model);
 
+int backgroundGaussianProcess(mixture_gaussian* gaussian_model, float T);
+
 //Start the Main Process
 int main()
 {
@@ -119,30 +121,21 @@ while(1)
     uint8_t* result_data = background_subtraction_result.data;
     for (int i = 0; i < frame_height*frame_width; i ++)
     {
-        /*
-        for(int k = 0; k < K; k ++)
-        {
-            cout <<"W_S:" << mixture_gaussian_model[i].W_S[k] << endl;
-            cout <<"Mean:" << mixture_gaussian_model[i].Mean[k] << endl;
-        }
+
         //background process heusristics
-        */
         sortGaussian(& mixture_gaussian_model[i]);
-        /*
-        for(int k = 0; k < K; k ++)
-        {
-            cout <<"W_S:" << mixture_gaussian_model[i].W_S[k] << endl;
-            cout <<"Mean:" << mixture_gaussian_model[i].Mean[k] << endl;
-        }
-        */
+        
+        // int background_model = backgroundGaussianProcess(& mixture_gaussian_model[i],0.5);
+        
         //Find the matching models
-        float intensity = frame_vec[i];
-        int matching_model_num = matching_models(mixture_gaussian_model[i],intensity);
+        // float intensity = frame_vec[i];
+        // int matching_model_num = matching_models(mixture_gaussian_model[i],intensity);
         //Define background or foreground
-        int background_model = 2;
-        if (background_model < matching_model_num)
-            result_data[i] = 255;
-        //update parameters
+        // if (background_model < matching_model_num)
+            // result_data[i] = 255;
+        //update parameters I will leave this part as the last step to write    
+        
+
 
     }
     
@@ -186,6 +179,7 @@ void vec4to1(vector<float_vec_t >* mixture_gaussian_mean, vector<float_vec_t >* 
         }
     }
 }
+//This fuction returns the index of the first matching model
 int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensity)
 {
     float std_scale = 2.5;
@@ -200,27 +194,42 @@ int matching_models(mixture_gaussian mixture_gaussian_model, float pixel_intensi
     }
     return 10;
 }
-
+//This function will sort the mixed gaussian model with respect to W/SD value
 void sortGaussian(mixture_gaussian* gaussian_model)
 {
     int num_gaussian = (*gaussian_model).Mean.size();
 
-    vector<int> updated_index(num_gaussian);
-    for (int i = 0; i <num_gaussian; i++){
-        updated_index[i] = i;
-    }
+    // vector<int> updated_index(num_gaussian);
+    // for (int i = 0; i <num_gaussian; i++){
+    //     updated_index[i] = i;
+    // }
        
-    float_vec_t W_by_SD_by_pixel;
-    W_by_SD_by_pixel = (*gaussian_model).W_S;
+    // float_vec_t W_by_SD_by_pixel;
+    // W_by_SD_by_pixel = (*gaussian_model).W_S;
 
-    sort(updated_index.begin(), updated_index.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
+    // sort(updated_index.begin(), updated_index.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
 
-    mixture_gaussian current_mixture_gaussian(*gaussian_model);
+    // mixture_gaussian current_mixture_gaussian(*gaussian_model);
+
+    // for (int i=0; i<num_gaussian; i++){
+    //     (*gaussian_model).Mean[i] = current_mixture_gaussian.Mean[updated_index[i]];
+    //     (*gaussian_model).Std[i] = current_mixture_gaussian.Std[updated_index[i]];
+    //     (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
+    //     (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
+    // }
+}
+
+//This function will return the index of the model when it is larger than the threshold
+int backgroundGaussianProcess(mixture_gaussian* gaussian_model, float T)
+{
+    int num_gaussian = (*gaussian_model).Mean.size();
+    float accumulate_weight = 0;
 
     for (int i=0; i<num_gaussian; i++){
-        (*gaussian_model).Mean[i] = current_mixture_gaussian.Mean[updated_index[i]];
-        (*gaussian_model).Std[i] = current_mixture_gaussian.Std[updated_index[i]];
-        (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
-        (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
+        accumulate_weight += (*gaussian_model).Weight[i];
+        if (accumulate_weight >= T){
+            return i+1;
+        }
     }
+    return 10;
 }
