@@ -199,24 +199,24 @@ void sortGaussian(mixture_gaussian* gaussian_model)
 {
     int num_gaussian = (*gaussian_model).Mean.size();
 
-    // vector<int> updated_index(num_gaussian);
-    // for (int i = 0; i <num_gaussian; i++){
-    //     updated_index[i] = i;
-    // }
+    vector<int> updated_index(num_gaussian);
+    for (int i = 0; i <num_gaussian; i++){
+        updated_index[i] = i;
+    }
        
-    // float_vec_t W_by_SD_by_pixel;
-    // W_by_SD_by_pixel = (*gaussian_model).W_S;
+    float_vec_t W_by_SD_by_pixel;
+    W_by_SD_by_pixel = (*gaussian_model).W_S;
 
-    // sort(updated_index.begin(), updated_index.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
+    sort(updated_index.begin(), updated_index.end(), [&W_by_SD_by_pixel](int i1, int i2) {return W_by_SD_by_pixel[i1] > W_by_SD_by_pixel[i2];});
 
-    // mixture_gaussian current_mixture_gaussian(*gaussian_model);
+    mixture_gaussian current_mixture_gaussian(*gaussian_model);
 
-    // for (int i=0; i<num_gaussian; i++){
-    //     (*gaussian_model).Mean[i] = current_mixture_gaussian.Mean[updated_index[i]];
-    //     (*gaussian_model).Std[i] = current_mixture_gaussian.Std[updated_index[i]];
-    //     (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
-    //     (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
-    // }
+    for (int i=0; i<num_gaussian; i++){
+        (*gaussian_model).Mean[i] = current_mixture_gaussian.Mean[updated_index[i]];
+        (*gaussian_model).Std[i] = current_mixture_gaussian.Std[updated_index[i]];
+        (*gaussian_model).Weight[i] = current_mixture_gaussian.Weight[updated_index[i]];
+        (*gaussian_model).W_S[i] = current_mixture_gaussian.W_S[updated_index[i]];
+    }
 }
 
 //This function will return the index of the model when it is larger than the threshold
