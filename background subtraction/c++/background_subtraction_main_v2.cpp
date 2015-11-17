@@ -88,7 +88,6 @@ while(1)
     cap >> frame;
     Mat gray_frame;
     cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
-    imshow("original_video",gray_frame);
     //Start the main process here
 //--------------------------Main Process-------------------------------------//
     //Convert the frame to 1d
@@ -96,9 +95,8 @@ while(1)
    	gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
     
     //Create a Threshold
-    Mat T = Mat::ones(1,frame_width*frame_height,CV_64F)*0.3;
     Sort_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight);
-    
+    Mat T = gaussian_weight.row(0);
     //Generate the Background Process
     Mat background_gaussian_model = backgroundGaussianProcess(gaussian_weight,T);
 
@@ -107,10 +105,16 @@ while(1)
     Mat matching_matrix = Mat::zeros(K,frame_height*frame_width,CV_64F);
     Mat matching_model = Matching_Gaussian(gaussian_mean,gaussian_std,gray_frame_1d,&matching_result,&matching_matrix);
     //Print out the result
-
+    Mat subtraction_result_1d;
+    //cout << matching_model.colRange(300,500) << endl;
+    //cout << background_gaussian_model.colRange(300,500) << endl;
+    compare(matching_model,background_gaussian_model,subtraction_result_1d,CMP_GT);
+    Mat subtraction_result = subtraction_result_1d.reshape(0,frame_height);
     //Update Parameters
     Update_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight,gray_frame_1d,matching_result,matching_matrix,alpha);
-
+    
+    imshow("original_video",gray_frame);
+    imshow("background_subtraction",subtraction_result);
     if(waitKey(1) == 27) //wait for 'esc' key press for 30 ms. If 'esc' key is pressed, break loop
    {
     cout << "ESC Key is pressed by user" << endl;
@@ -200,14 +204,22 @@ Mat Matching_Gaussian(Mat Gaussian_mean, Mat Gaussian_std, Mat Current_Frame,Mat
 	{
 		Mat difference = abs(Gaussian_mean.row(i)-Current_Frame);
 		Mat scaled_std = Gaussian_std.row(i)*std_scale;
-		
+		//cout << difference.colRange(329,331) << endl;
+		//cout << scaled_std.colRange(329,331) << endl;
+
 		Mat compare_result;
 		compare(difference,scaled_std,compare_result,CMP_LE);
 		compare_result = compare_result/255;
 		compare_result.convertTo(compare_result,CV_64F);
-		
+		//cout << compare_result.colRange(329,331) << endl;
+
 		Mat result_i;
-		bitwise_xor(compare_result,*history,result_i);
+
+		compare(compare_result-*history,Mat::zeros(1,Gaussian_mean.size[1],CV_64F),result_i,CMP_GT);
+		result_i = result_i/255;
+		//cout << history->colRange(329,331) << endl;
+		//cout << result_i.colRange(329,331) << endl;
+
 		result_i.convertTo(result_i,CV_64F);
 		result_i.copyTo(Matching_Matrix->row(i));//updated Matching_Matrix
 		result += (i+1)*result_i;
@@ -218,7 +230,7 @@ Mat Matching_Gaussian(Mat Gaussian_mean, Mat Gaussian_std, Mat Current_Frame,Mat
 	}
 	Mat zero_matrix = Mat::zeros(1,Gaussian_mean.size[1],CV_64F);
 	Mat modify_zero;
-	bitwise_or(result,zero_matrix,modify_zero);
+	bitwise_or(*history,zero_matrix,modify_zero);
 	modify_zero = (1-modify_zero)*10;
 	modify_zero.convertTo(modify_zero,CV_64F);
 	result = result + modify_zero;
@@ -306,8 +318,10 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 		updated_matching_weight.copyTo(Gaussian_weight->row(i));
 
 		//update mean for matching k models
+		
 		Mat updated_matching_mean = (1-matching_matrix_i).mul(gaussian_mean_i)+(1-P).mul(matching_matrix_i.mul(gaussian_mean_i))+P.mul(matching_matrix_i.mul(Current_Frame));
 		updated_matching_mean.copyTo(Gaussian_mean->row(i));
+		
 
 		//update std for matching k models
 		 Mat new_varaiance_i;
