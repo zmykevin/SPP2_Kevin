@@ -85,7 +85,9 @@ int main()
 while(1)
 {
     Mat frame;
-    cap >> frame;
+    bool read_success = cap.read(frame);
+    if (read_success)
+    {
     Mat gray_frame;
     cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
     //Start the main process here
@@ -120,6 +122,12 @@ while(1)
     cout << "ESC Key is pressed by user" << endl;
     break;
    }
+}
+else
+{
+	break;
+}
+
 }
 
 	return 0;
@@ -174,6 +182,7 @@ void Sort_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight)
 		new_gaussian_std_i.copyTo(Gaussian_std->row(i));
 	}
 }
+
 
 
 Mat backgroundGaussianProcess(Mat Gaussian_weight, Mat T)
