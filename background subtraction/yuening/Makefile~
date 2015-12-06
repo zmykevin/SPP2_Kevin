@@ -17,7 +17,7 @@ bg: bg.o ball.o
 
 test: test.o; $(CXX) $< -o $@ $(LDFLAGS)
 
-MOG_function: MOG_function.o ball.o; $(CXX) $< ball.o -o $@ $(LDFLAGS)
+MOG_function: MOG_function.o; $(CXX) $< -o $@ $(LDFLAGS)
 
 %.o: %.cpp; $(CXX) $< -o $@ $(CXXFLAGS)
 

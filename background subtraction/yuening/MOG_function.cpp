@@ -11,11 +11,13 @@
 #include <vector>
 #include <algorithm>
 //#include <cmath>
+//include yuening's definition
+#include "ball.h"
 
 using namespace cv;
 using namespace std;
-
-const double PI = 3.14159260;
+typedef vector<Mat> Mat_List;//Define a new dataset to store the Mat_List;
+//const double PI = 3.14159260;
 
 //backgournd Gaussian Process helps to rerank the gaussian_weight
 Mat compare_to_scalar(Mat matrix_1, int scalar);
@@ -28,107 +30,64 @@ Mat Matching_Gaussian(Mat Gaussian_mean, Mat Gaussian_std, Mat Current_Frame,Mat
 
 void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight, Mat Current_Frame, Mat matching_result, Mat matching_matrix,double alpha);
 
+Mat_List initialization_gaussian_model(int K, int num_sample,int frame_width, int frame_height, VideoCapture cap);
+
+Mat MOG_background_subtraction(Mat_List* Gaussian_Mixture_Model, Mat gray_frame, double alpha, int frame_width, int frame_height, int K);
+
 int main()
 {
 	cout << "background subtraction" << endl;
+	Ball myball(100, 100, 6, 10);
 	// Define the number of gaussina models in the mixed model
     int K = 3;
     //Define the initialization_model_size
-    int initial_sample_size = 70;
+    int initial_sample_size = 60;
 
     // Define the learning reate
-    double alpha = 0.05;
+    double alpha = 0.1;
     
     cout << "start to capture the video" << endl;
     
-   	VideoCapture cap("highwayI_raw.AVI");
+   	//VideoCapture cap("highwayI_raw.AVI");
+   	VideoCapture cap(0);
    	int frame_width = (int)cap.get(CAP_PROP_FRAME_WIDTH);
    	int frame_height = (int)cap.get(CAP_PROP_FRAME_HEIGHT);
+   	//This is added if the image frame is too large
+   	int resize_width = frame_width/2.5;
+   	int resize_height = frame_height/3;
+   	
 //--------------------------Initialization of Model-------------------------------------//
-   	Mat gaussian_mean = Mat::zeros(K,frame_width*frame_height,CV_64F);
-   	//Initialize the weight here
-   	Mat gaussian_weight = Mat::ones(K,frame_width*frame_height,CV_64F)*(1.0/K);
-   	Mat gaussian_std = Mat::zeros(K,frame_width*frame_height,CV_64F);
-   	for (int i = 0; i < K; i ++)
-   	{
-   		Mat frame;
-   		cap >> frame;
-   		Mat gray_frame;
-   		cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
-   		Mat gray_frame_1d = gray_frame.reshape(0,1);
-   		gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
-   		//cout << gray_frame_1d.colRange(0,5) << endl;
-   		gray_frame_1d.copyTo(gaussian_mean.row(i));
-   		//cout << gaussian_mean.row(i).colRange(0,5) << endl;
-   	}
-   	for (int j = 0; j < initial_sample_size; j ++)
-   	{
-   		Mat frame;
-   		cap >> frame;
-   		Mat gray_frame;
-   		cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
-   		for (int k = 0; k < K; k ++)
-   		{
-   			Mat gray_frame_1d = gray_frame.reshape(0,1);
-   			gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
-   			Mat difference = abs(gray_frame_1d-gaussian_mean.row(k))/(double)initial_sample_size;
-   			//cout << difference.colRange(0,5) << endl;
-   			Mat Sum = gaussian_std.row(k).clone();
-   			//cout << Sum.colRange(0,5) << endl;
-   			Sum += difference;
-   			Sum.copyTo(gaussian_std.row(k));
-   			//cout << gaussian_std.row(k).colRange(0,5) << endl;
-   		}
-   	}
-   	//Next step is to define the function to do back process
 
-while(1)
-{
-    Mat frame;
-    bool read_success = cap.read(frame);
-    if (read_success)
-    {
-    Mat gray_frame;
-    cvtColor(frame,gray_frame,COLOR_BGR2GRAY);
-    //Start the main process here
-//--------------------------Main Process-------------------------------------//
-    //Convert the frame to 1d
-    Mat gray_frame_1d = gray_frame.reshape(0,1);
-   	gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
-    
-    //Create a Threshold
-    Sort_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight);
-    Mat T = gaussian_weight.row(0);
-    //Generate the Background Process
-    Mat background_gaussian_model = backgroundGaussianProcess(gaussian_weight,T);
+   	Mat_List Gaussian_Mixture_Model = initialization_gaussian_model(K,initial_sample_size,resize_width,resize_height,cap); 
+	while(1)
+	{
+	    Mat frame;
+	    bool read_success = cap.read(frame);
+	    Mat resized_frame;
+	    resize(frame,resized_frame,Size(resize_width,resize_height));
+	    if (read_success)
+	    {
+	    Mat gray_frame;
+	    cvtColor(resized_frame,gray_frame,COLOR_BGR2GRAY);
+	    //Start the main process here
+	//--------------------------Main Process-------------------------------------//
+		Mat subtraction_result = MOG_background_subtraction(&Gaussian_Mixture_Model,gray_frame,alpha,resize_width,resize_height,K);
+	    Mat show_frame = myball.updateBall(gray_frame, subtraction_result);
+	    imshow("original_video",gray_frame);
+	    imshow("background_subtraction",show_frame);
 
-    //Find the Matching Gaussian
-    Mat matching_result = Mat::zeros(1,frame_height*frame_width,CV_64F);
-    Mat matching_matrix = Mat::zeros(K,frame_height*frame_width,CV_64F);
-    Mat matching_model = Matching_Gaussian(gaussian_mean,gaussian_std,gray_frame_1d,&matching_result,&matching_matrix);
-    //Print out the result
-    Mat subtraction_result_1d;
-    //cout << matching_model.colRange(300,500) << endl;
-    //cout << background_gaussian_model.colRange(300,500) << endl;
-    compare(matching_model,background_gaussian_model,subtraction_result_1d,CMP_GT);
-    Mat subtraction_result = subtraction_result_1d.reshape(0,frame_height);
-    //Update Parameters
-    Update_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight,gray_frame_1d,matching_result,matching_matrix,alpha);
-    
-    imshow("original_video",gray_frame);
-    imshow("background_subtraction",subtraction_result);
-    if(waitKey(1) == 27) //wait for 'esc' key press for 30 ms. If 'esc' key is pressed, break loop
-   {
-    cout << "ESC Key is pressed by user" << endl;
-    break;
-   }
-}
-else
-{
-	break;
-}
+	    if(waitKey(1) == 27) //wait for 'esc' key press for 30 ms. If 'esc' key is pressed, break loop
+	   {
+	    cout << "ESC Key is pressed by user" << endl;
+	    break;
+	   }
+	}
+	else
+	{
+		break;
+	}
 
-}
+	}
 
 	return 0;
 }
@@ -341,4 +300,88 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 		 updated_std = (1-matching_matrix_i).mul(gaussian_std_i) + updated_std;
 		 updated_std.copyTo(Gaussian_std->row(i));
 	}
+}
+
+
+Mat_List initialization_gaussian_model(int K, int num_sample,int frame_width, int frame_height, VideoCapture cap)
+{
+	Mat gaussian_mean = Mat::zeros(K,frame_width*frame_height,CV_64F);
+   	//Initialize the weight here
+   	Mat gaussian_weight = Mat::ones(K,frame_width*frame_height,CV_64F)*(1.0/K);
+   	Mat gaussian_std = Mat::zeros(K,frame_width*frame_height,CV_64F);
+   	for (int i = 0; i < K; i ++)
+   	{
+   		Mat frame;
+   		cap >> frame;
+   		Mat resized_frame;
+   		resize(frame,resized_frame,Size(frame_width,frame_height));
+   		Mat gray_frame;
+   		cvtColor(resized_frame,gray_frame,COLOR_BGR2GRAY);
+   		Mat gray_frame_1d = gray_frame.reshape(0,1);
+   		gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
+   		//cout << gray_frame_1d.colRange(0,5) << endl;
+   		gray_frame_1d.copyTo(gaussian_mean.row(i));
+   		//cout << gaussian_mean.row(i).colRange(0,5) << endl;
+   	}
+   	for (int j = 0; j < num_sample; j ++)
+   	{
+   		Mat frame;
+   		cap >> frame;
+   		Mat resized_frame;
+   		resize(frame,resized_frame,Size(frame_width,frame_height));
+   		Mat gray_frame;
+   		cvtColor(resized_frame,gray_frame,COLOR_BGR2GRAY);
+   		for (int k = 0; k < K; k ++)
+   		{
+   			Mat gray_frame_1d = gray_frame.reshape(0,1);
+   			gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
+   			Mat difference = abs(gray_frame_1d-gaussian_mean.row(k))/(double)num_sample;
+   			//cout << difference.colRange(0,5) << endl;
+   			Mat Sum = gaussian_std.row(k).clone();
+   			//cout << Sum.colRange(0,5) << endl;
+   			Sum += difference;
+   			Sum.copyTo(gaussian_std.row(k));
+   			//cout << gaussian_std.row(k).colRange(0,5) << endl;
+   		}
+   	}
+   	Mat_List Mixture_Gaussian_Model;
+   	Mixture_Gaussian_Model.push_back(gaussian_mean);
+   	Mixture_Gaussian_Model.push_back(gaussian_weight);
+   	Mixture_Gaussian_Model.push_back(gaussian_std);
+   	return Mixture_Gaussian_Model;
+}
+
+Mat MOG_background_subtraction(Mat_List* Gaussian_Mixture_Model, Mat gray_frame, double alpha, int frame_width, int frame_height, int K)
+{
+	Mat gaussian_mean = (*Gaussian_Mixture_Model)[0];
+   	Mat gaussian_weight = (*Gaussian_Mixture_Model)[1];
+   	Mat gaussian_std = (*Gaussian_Mixture_Model)[2];
+	//Convert the frame to 1d
+    Mat gray_frame_1d = gray_frame.reshape(0,1);
+   	gray_frame_1d.convertTo(gray_frame_1d,CV_64F);
+    
+    //Create a Threshold
+    Sort_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight);
+    Mat T = gaussian_weight.row(0);
+    //Generate the Background Process
+    Mat background_gaussian_model = backgroundGaussianProcess(gaussian_weight,T);
+
+    //Find the Matching Gaussian
+    Mat matching_result = Mat::zeros(1,frame_height*frame_width,CV_64F);
+    Mat matching_matrix = Mat::zeros(K,frame_height*frame_width,CV_64F);
+    Mat matching_model = Matching_Gaussian(gaussian_mean,gaussian_std,gray_frame_1d,&matching_result,&matching_matrix);
+    //Print out the result
+    Mat subtraction_result_1d;
+    //cout << matching_model.colRange(300,500) << endl;
+    //cout << background_gaussian_model.colRange(300,500) << endl;
+    compare(matching_model,background_gaussian_model,subtraction_result_1d,CMP_GT);
+    Mat subtraction_result = subtraction_result_1d.reshape(0,frame_height);
+    //Update Parameters
+    Update_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight,gray_frame_1d,matching_result,matching_matrix,alpha);
+    (*Gaussian_Mixture_Model)[0] = gaussian_mean;
+    (*Gaussian_Mixture_Model)[1] = gaussian_weight;
+    (*Gaussian_Mixture_Model)[2] = gaussian_std;
+
+    //return the mask
+    return subtraction_result;
 }
