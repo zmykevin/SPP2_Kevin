@@ -72,22 +72,39 @@ class Ball(object):
                 print alpha/PI*180
                 self.theta = 2*alpha - self.theta
 
-
                 print self.theta/PI*180
                 next_x = int(round(self.center_x + self.speed*cos(self.theta)))
                 next_y = int(round(self.center_y + self.speed*sin(self.theta)))
                 print (next_y, next_x)
+
+                flag = 1
+                while flag:
+                    flag = 0
+                    # print theta
+                    if next_x < 0:
+                        self.theta = PI-self.theta
+                        flag = 1
+                    elif next_x >= width:
+                        self.theta = PI-self.theta
+                        flag = 1
+                    elif next_y < 0:
+                        self.theta = -self.theta
+                        flag = 1
+                    elif next_y >= height:
+                        self.theta = -self.theta
+                        flag = 1
+                    if flag:
+                        next_x = int(round(next_x + self.speed*cos(self.theta)))
+                        next_y = int(round(next_y + self.speed*sin(self.theta)))
+
+
             
         self.center_x = next_x
         self.center_y = next_y
 
-        # show image
+        # return image
         show_img = img.copy()
-        # show_img[center_y, center_x] = 255
         cv2.circle(show_img, (self.center_x,self.center_y), 5, 255, -1)
-        # cv2.imshow('my img', show_img)
-        # k = cv2.waitKey(50) & 0xff
-        # if k == 27:
-            # break
-        # cv2.waitKey(5)
         return show_img
+        # return point
+        # return (self.center_y, self.center_x), self.theta 
