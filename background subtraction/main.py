@@ -185,6 +185,8 @@ if __name__ == '__main__':
 
     #Start to capture the video
     cap = cv2.VideoCapture('highwayI_raw.AVI')
+    #initialize the camera
+
 
     #Get the size dimension of the frame
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
