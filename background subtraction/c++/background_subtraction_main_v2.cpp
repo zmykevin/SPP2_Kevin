@@ -34,7 +34,7 @@ int main()
 	// Define the number of gaussina models in the mixed model
     int K = 3;
     //Define the initialization_model_size
-    int initial_sample_size = 70;
+    int initial_sample_size = 90;
 
     // Define the learning reate
     double alpha = 0.05;
@@ -98,7 +98,7 @@ while(1)
     
     //Create a Threshold
     Sort_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight);
-    Mat T = gaussian_weight.row(0);
+    Mat T = gaussian_weight.row(0)+gaussian_weight.row(1);
     //Generate the Background Process
     Mat background_gaussian_model = backgroundGaussianProcess(gaussian_weight,T);
 
@@ -221,7 +221,8 @@ Mat Matching_Gaussian(Mat Gaussian_mean, Mat Gaussian_std, Mat Current_Frame,Mat
 		compare_result = compare_result/255;
 		compare_result.convertTo(compare_result,CV_64F);
 		//cout << compare_result.colRange(329,331) << endl;
-
+		//Updated by Mingyang(Kevin) Zhou 12_12
+		compare_result.copyTo(Matching_Matrix->row(i));
 		Mat result_i;
 
 		compare(compare_result-*history,Mat::zeros(1,Gaussian_mean.size[1],CV_64F),result_i,CMP_GT);
@@ -230,7 +231,8 @@ Mat Matching_Gaussian(Mat Gaussian_mean, Mat Gaussian_std, Mat Current_Frame,Mat
 		//cout << result_i.colRange(329,331) << endl;
 
 		result_i.convertTo(result_i,CV_64F);
-		result_i.copyTo(Matching_Matrix->row(i));//updated Matching_Matrix
+		//Updated by Mingyang(Kevin) Zhou 12_12
+		//result_i.copyTo(Matching_Matrix->row(i));//updated Matching_Matrix
 		result += (i+1)*result_i;
 		
 		Mat new_history;
@@ -249,7 +251,8 @@ Mat Matching_Gaussian(Mat Gaussian_mean, Mat Gaussian_std, Mat Current_Frame,Mat
 
 void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight, Mat Current_Frame, Mat matching_result, Mat matching_matrix,double alpha)
 {
-	double low_weight = 0;
+	double low_weight = 0.005;
+	double initial_std = 6;
 	//First let's update the non-matching model
 	int num_gaussian = Gaussian_mean->size[0];
 	Mat non_matching_model = (double)1-matching_result;
@@ -257,7 +260,7 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 	Mat original_gaussian_mean = Gaussian_mean->clone();
 	Mat original_gaussian_std = Gaussian_std->clone();
 	Mat original_gaussian_weight = Gaussian_weight->clone();
-
+    
 	//Update Mean
 	Mat non_matching_new_mean = Current_Frame.mul(non_matching_model)+(original_gaussian_mean.row(num_gaussian-1)).mul(matching_result);
 	//cout << Current_Frame.colRange(102,104) << endl;
@@ -266,27 +269,31 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 	//cout << (Gaussian_mean->row(num_gaussian-1)).colRange(102,104) << endl;
 
 	//update Std
-	Mat A = abs(255-Gaussian_mean->row(num_gaussian-1));
-	Mat B = abs(0-Gaussian_mean->row(num_gaussian-1));
+	//Mat A = abs(255-Gaussian_mean->row(num_gaussian-1));
+	//Mat B = abs(0-Gaussian_mean->row(num_gaussian-1));
 	//cout << A.colRange(102,104) << endl;
 	//cout << B.colRange(102,104) << endl;
 
 	Mat updated_std;
-	max(A,B,updated_std);
+	//max(A,B,updated_std);
 	//cout << updated_std.colRange(102,104) << endl;
-
-	updated_std = updated_std.mul(non_matching_model)+(original_gaussian_std.row(num_gaussian-1)).mul(matching_result);
+	updated_std = initial_std*non_matching_model+(original_gaussian_std.row(num_gaussian-1)).mul(matching_result);
+	//updated_std = updated_std.mul(non_matching_model)+(original_gaussian_std.row(num_gaussian-1)).mul(matching_result);
 	//cout << updated_std.colRange(102,104) << endl;
 	updated_std.copyTo(Gaussian_std->row(num_gaussian-1));
 	//update weight
-	Mat updated_weight = (Gaussian_weight->row(num_gaussian-1)).mul(matching_result);
+	Mat updated_weight = (original_gaussian_weight.row(num_gaussian-1)).mul(matching_result) + low_weight*non_matching_model;
+	//Mat updated_weight = (original_gaussian_weight.row(num_gaussian-1)).mul(matching_result) + (1-alpha)*(original_gaussian_weight.row(num_gaussian-1)).mul(non_matching_model);
 	updated_weight.copyTo(Gaussian_weight->row(num_gaussian-1));
-	Mat weight_distribution = (original_gaussian_weight.row(num_gaussian-1)).mul(non_matching_model)/(double)(num_gaussian-1);
+	//Discard this weight distribution at this moment.
+	Mat weight_distribution = (abs(original_gaussian_weight.row(num_gaussian-1)-low_weight)).mul(non_matching_model)/(double)(num_gaussian-1);
+	
 	for (int i = 0; i < num_gaussian-1; i ++)
 	{
 		Mat new_weight_i = original_gaussian_weight.row(i) + weight_distribution;
 		new_weight_i.copyTo(Gaussian_weight->row(i)); 
 	}
+	
 	//cout << Gaussian_weight->col(102) << endl;
 	original_gaussian_mean = Gaussian_mean->clone();
 	original_gaussian_std = Gaussian_std->clone();
@@ -321,9 +328,10 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 		Mat GDP = head_part.mul(exponential_component);
 		Mat P = alpha*GDP;
 		
-		//update_weightfor_the gaussian_model
-		Mat matching_k_model_weight = matching_result.mul(gaussian_weight_i);
-		Mat updated_matching_weight = non_matching_model.mul(gaussian_weight_i)+(1-alpha)*matching_k_model_weight+alpha*matching_k_model_weight;
+		//update_weight for_the gaussian_model
+		Mat matching_k_model_weight = (matching_result).mul(gaussian_weight_i);
+		//Updated by Mingyang Zhou
+		Mat updated_matching_weight = (non_matching_model).mul(gaussian_weight_i)+(1-alpha)*matching_k_model_weight+alpha*(matching_k_model_weight.mul(matching_matrix_i));
 		updated_matching_weight.copyTo(Gaussian_weight->row(i));
 
 		//update mean for matching k models
