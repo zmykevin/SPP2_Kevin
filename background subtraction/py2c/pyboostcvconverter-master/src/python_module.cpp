@@ -266,8 +266,8 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 */
 void Update_Gaussian(cv::Mat* Gaussian_mean, cv::Mat* Gaussian_std, cv::Mat* Gaussian_weight, cv::Mat Current_Frame, cv::Mat matching_result, cv::Mat matching_matrix,double alpha)
 {
-	double low_weight = 0.005;
-	double initial_std = 6;
+	double low_weight = 0.001;//Used to be 0.005
+	double initial_std = 6;//used to be 6
 	//First let's update the non-matching model
 	int num_gaussian = Gaussian_mean->size[0];
 	cv::Mat non_matching_model = (double)1-matching_result;

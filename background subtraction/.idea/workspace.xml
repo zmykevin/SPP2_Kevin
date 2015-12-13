@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/MOG_bg_subtraction.py" line="97" />
+    <bookmark url="file://$PROJECT_DIR$/MOG_bg_subtraction.py" line="98" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eb8b5233-b542-49b5-adc5-56eb65828af3" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/c++/MOG_function.o" afterPath="$PROJECT_DIR$/c++/MOG_function.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/c++/MOG_function" afterPath="$PROJECT_DIR$/c++/MOG_function" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/c++/background_subtraction_main_v2.o" afterPath="$PROJECT_DIR$/c++/background_subtraction_main_v2.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/c++/background_subtraction_main_v2" afterPath="$PROJECT_DIR$/c++/background_subtraction_main_v2" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ball_API.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/MOG_bg_subtraction.py" afterPath="$PROJECT_DIR$/MOG_bg_subtraction.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/c++/MOG_function.cpp" afterPath="$PROJECT_DIR$/c++/MOG_function.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/c++/background_subtraction_main_v2.cpp" afterPath="$PROJECT_DIR$/c++/background_subtraction_main_v2.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/camera_setup.py" afterPath="$PROJECT_DIR$/camera_setup.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/py2c/pyboostcvconverter-master/src/python_module.cpp" afterPath="$PROJECT_DIR$/py2c/pyboostcvconverter-master/src/python_module.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -57,13 +51,25 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MOG_bg_subtraction.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="MOG_bg_subtraction.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MOG_bg_subtraction.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-0.15384616">
-              <caret line="103" column="35" selection-start-line="103" selection-start-column="35" selection-end-line="103" selection-end-column="35" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="118" column="54" selection-start-line="118" selection-start-column="54" selection-end-line="118" selection-end-column="54" />
               <folding>
                 <element signature="e#21#33#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ball_API.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ball_API.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.3181818">
+              <caret line="55" column="13" selection-start-line="55" selection-start-column="13" selection-end-line="55" selection-end-column="13" />
+              <folding>
+                <element signature="e#0#18#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -98,8 +104,9 @@
         <option value="$PROJECT_DIR$/test_background_subtraction.py" />
         <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/camera_setup.py" />
-        <option value="$PROJECT_DIR$/MOG_bg_subtraction.py" />
         <option value="$PROJECT_DIR$/existing_background_subtraction.py" />
+        <option value="$PROJECT_DIR$/ball_API.py" />
+        <option value="$PROJECT_DIR$/MOG_bg_subtraction.py" />
       </list>
     </option>
   </component>
@@ -483,11 +490,6 @@
           <url>file://$PROJECT_DIR$/main.py</url>
           <line>250</line>
           <option name="timeStamp" value="82" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/MOG_bg_subtraction.py</url>
-          <line>111</line>
-          <option name="timeStamp" value="88" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -885,14 +887,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/camera_setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="56" column="24" selection-start-line="56" selection-start-column="24" selection-end-line="56" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/existing_background_subtraction.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -901,12 +895,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/camera_setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="56" column="24" selection-start-line="56" selection-start-column="24" selection-end-line="56" selection-end-column="24" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/MOG_bg_subtraction.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-0.15384616">
-          <caret line="103" column="35" selection-start-line="103" selection-start-column="35" selection-end-line="103" selection-end-column="35" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="118" column="54" selection-start-line="118" selection-start-column="54" selection-end-line="118" selection-end-column="54" />
           <folding>
             <element signature="e#21#33#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ball_API.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3181818">
+          <caret line="55" column="13" selection-start-line="55" selection-start-column="13" selection-end-line="55" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>

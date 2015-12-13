@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from scipy import ndimage
 from camera_setup import *
+from ball_API import *
 
 def neighbour_filter(subtraction_background):
     neighbour_filter = np.array([[1,1,0],[1,0,1],[0,1,1]],dtype = 'uint8');
@@ -73,7 +74,7 @@ def flycap_gaussian_model_initialization(flycam,frame_width,frame_height,K,initi
     for j in range(0,initial_num_sample):
         frame = undistort_image(flycam)
         [frame,H] = four_pts_transormation(frame,reference_4_points)
-        #frame = cv2.resize(frame,(frame_width,frame_height))
+        frame = cv2.resize(frame,(frame_width,frame_height))
         #Convert frame to gray frame
         gray_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
         gray_frame_1D = gray_frame.flatten()
@@ -91,7 +92,7 @@ if __name__ == '__main__':
     #Define the number of gaussina models in the mixed model
     K = 3
     #Define initial weight parameter
-    initial_num_sample = 200
+    initial_num_sample = 500
 
     #Start to capture the video
     #cap = cv2.VideoCapture('highwayI_raw.AVI')
@@ -105,19 +106,23 @@ if __name__ == '__main__':
     frame_height = first_im.shape[0]
     #frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     #frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    #resize_width = frame_width/3
-    #resize_height = frame_height/3
+    resize_width = int(frame_width/1.2)
+    resize_height = int(frame_height/1.2)
 
     #Initialize the gaussian model
     #gaussian_mean,gaussian_std,gaussian_weight = gaussian_model_initialization(cap,resize_width,resize_height,K,initial_num_sample)
     #gaussian_mean,gaussian_std,gaussian_weight = gaussian_model_initialization(cap,frame_width,frame_height,K,initial_num_sample)
-    gaussian_mean,gaussian_std,gaussian_weight = flycap_gaussian_model_initialization(Flycam,frame_width,frame_height,K,initial_num_sample)
+    gaussian_mean,gaussian_std,gaussian_weight = flycap_gaussian_model_initialization(Flycam,resize_width,resize_height,K,initial_num_sample)
     #fgbg = cv2.createBackgroundSubtractorMOG2(history = 500,varThreshold = 20,detectShadows= True)
+
+    #initialize the ball
+    myball = Ball(frame_width/2,frame_height/2,PI/2,15)
+
     while(1):
         frame = undistort_image(Flycam)
         [frame,H] = four_pts_transormation(frame,reference_4_points)
         #ret,frame = cap.read()
-        #frame = cv2.resize(frame,(resize_width,resize_height))
+        frame = cv2.resize(frame,(resize_width,resize_height))
         #if ret:
         gray_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
         #background_subtraction = fgbg.apply(gray_frame)
@@ -125,7 +130,9 @@ if __name__ == '__main__':
         background_subtraction = background_subtraction.astype(dtype = 'int64')
         background_subtraction = neighbour_filter(background_subtraction)
         background_subtraction = background_subtraction.astype(dtype = 'uint8')
-        cv2.imshow('frame',background_subtraction)
+        background_subtraction = cv2.medianBlur(background_subtraction,7)
+        show_img = myball.updateBall(background_subtraction)
+        cv2.imshow('frame',show_img)
         cv2.imshow('original_frame',gray_frame)
         if cv2.waitKey(1) == 27:
             break
