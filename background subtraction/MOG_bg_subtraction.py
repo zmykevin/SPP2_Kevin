@@ -90,7 +90,7 @@ def flycap_gaussian_model_initialization(flycam,frame_width,frame_height,K,initi
 if __name__ == '__main__':
     print ('Background Subtraction Start')
     #Define the number of gaussina models in the mixed model
-    K = 3
+    K = 4
     #Define initial weight parameter
     initial_num_sample = 500
 
@@ -106,8 +106,8 @@ if __name__ == '__main__':
     frame_height = first_im.shape[0]
     #frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     #frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    resize_width = int(frame_width/1.2)
-    resize_height = int(frame_height/1.2)
+    resize_width = int(frame_width/1.5)
+    resize_height = int(frame_height/1.5)
 
     #Initialize the gaussian model
     #gaussian_mean,gaussian_std,gaussian_weight = gaussian_model_initialization(cap,resize_width,resize_height,K,initial_num_sample)
@@ -130,7 +130,8 @@ if __name__ == '__main__':
         background_subtraction = background_subtraction.astype(dtype = 'int64')
         background_subtraction = neighbour_filter(background_subtraction)
         background_subtraction = background_subtraction.astype(dtype = 'uint8')
-        background_subtraction = cv2.medianBlur(background_subtraction,7)
+        background_subtraction = cv2.medianBlur(background_subtraction,5)
+        #background_subtraction = cv2.GaussianBlur(background_subtraction,(5,5),0)
         show_img = myball.updateBall(background_subtraction)
         cv2.imshow('frame',show_img)
         cv2.imshow('original_frame',gray_frame)

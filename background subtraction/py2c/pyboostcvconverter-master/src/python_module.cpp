@@ -266,7 +266,7 @@ void Update_Gaussian(Mat* Gaussian_mean, Mat* Gaussian_std, Mat* Gaussian_weight
 */
 void Update_Gaussian(cv::Mat* Gaussian_mean, cv::Mat* Gaussian_std, cv::Mat* Gaussian_weight, cv::Mat Current_Frame, cv::Mat matching_result, cv::Mat matching_matrix,double alpha)
 {
-	double low_weight = 0.001;//Used to be 0.005
+	double low_weight = 0.005;//Used to be 0.005S
 	double initial_std = 6;//used to be 6
 	//First let's update the non-matching model
 	int num_gaussian = Gaussian_mean->size[0];
@@ -377,7 +377,7 @@ PyObject* MOG_Background_Process(PyObject* Current_frame_Py, PyObject* Gaussian_
 	int frame_height = gray_frame.size[0];
 	int frame_width = gray_frame.size[1];
 	int K = gaussian_mean.size[0];
-	double alpha = 0.005;
+	double alpha = 0.0015;
 
 	//Initialialize the cv::mat file
 	cv::Mat gray_frame_1d = gray_frame.reshape(0,1);
@@ -386,8 +386,8 @@ PyObject* MOG_Background_Process(PyObject* Current_frame_Py, PyObject* Gaussian_
     //Create a Threshold
     Sort_Gaussian(&gaussian_mean,&gaussian_std,&gaussian_weight);
     
-    cv::Mat T = 0.9*Mat::ones(1,frame_height*frame_width,CV_64F);
-    //cv::Mat T = gaussian_weight.row(0)+gaussian_weight.row(1);
+    //cv::Mat T = 0.9*Mat::ones(1,frame_height*frame_width,CV_64F);
+    cv::Mat T = gaussian_weight.row(0)+gaussian_weight.row(1);
     //Generate the Background Process
     cv::Mat background_gaussian_model = backgroundGaussianProcess(gaussian_weight,T);
 
